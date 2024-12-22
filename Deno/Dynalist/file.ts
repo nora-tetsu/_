@@ -32,6 +32,19 @@ export class DynalistDocument {
     filterNodes(fn: (node: DynalistNode) => unknown) {
         return this.nodes.filter(fn);
     }
+    match(query: Partial<NodeData>) {
+        return this.nodes.filter(node => {
+            let bool = true;
+            if (query.id && query.id !== node.data.id) bool = false;
+            if (query.content && !node.data.content.includes(query.content)) bool = false;
+            if (query.note && !node.data.note.includes(query.note)) bool = false;
+            if (query.checked !== undefined && node.data.checked !== query.checked) bool = false;
+            if (query.checkbox !== undefined && node.data.checkbox !== query.checkbox) bool = false;
+            if (query.color !== undefined && node.data.color !== query.color) bool = false;
+            if (query.heading !== undefined && node.data.heading !== query.heading) bool = false;
+            return bool;
+        })
+    }
     writeData(filepath: string) {
         Deno.writeTextFileSync(filepath, JSON.stringify(this.currentData, null, '\t'));
     }
@@ -238,7 +251,7 @@ export class DynalistNode {
             // 無効な項目でないか
             if (ignoreComments && target.shouldBeIgnored) return;
             if (!isParent || includeParent) {
-                result.push(content.replace(/^\s$/,""));
+                result.push(content.replace(/^\s$/, ""));
                 includeNotes && result.push(note, '\n');
             }
 
@@ -444,7 +457,7 @@ export class DynalistNode {
         }
 
         const map = text.split('\n').map(line => reflectDecoration(line));
-        let result = marked.parse(map.join('\n\n').replace(/\|\n\n\|/g, '|\n|'));
+        let result = marked.parse(map.join('\n\n').replace(/\|\n\n\|/g, '|\n|')) as string;
         if (footnotes.length) result += '\n<hr />\n' + footnotes.join('\n');
 
         // preタグ内の余計な改行を除去
