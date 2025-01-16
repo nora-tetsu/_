@@ -27,6 +27,18 @@ export type NodeData = {
     collapsed?: boolean,
     children: string[], // idの配列
 }
+export type ChangeContentRequest = {
+    action: string, //'insert' | 'edit' | 'move' | 'delete',
+    node_id?: string,
+    parent_id?: string,
+    index?: number,
+    content?: string,
+    note?: string,
+    checked?: boolean,
+    checkbox?: boolean,
+    heading?: number,
+    color?: number,
+}
 export type SendToInboxRequest = {
     index: number,
     content: string,
