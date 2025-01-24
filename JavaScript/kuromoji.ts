@@ -67,8 +67,8 @@ function cosineSimilarity(vec1: { [key: string]: number }, vec2: { [key: string]
 }
 
 // 文字列の類似度を測定して並べ替える関数
-export async function sortStringsBySimilarity(baseString: string, strings: string[]) {
-    const tokenizer = await kuromoji.createTokenizer();
+const tokenizer = await kuromoji.createTokenizer();
+export function sortStringsBySimilarity(baseString: string, strings: string[]) {
     const baseVector = textToVector(baseString, tokenizer);
     return strings.map(str => ({
         text: str,
