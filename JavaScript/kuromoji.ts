@@ -37,7 +37,7 @@ type KuromojiToken = {
     basic_form: string,      // 基本形
     reading: string,       // 読み
     pronunciation: string  // 発音
-  }
+}
 
 // 以下Copilotからの提案
 // 文字列をベクトルに変換する関数
@@ -74,6 +74,24 @@ export function sortStringsBySimilarity(baseString: string, strings: string[]) {
         text: str,
         similarity: cosineSimilarity(baseVector, textToVector(str, tokenizer))
     })).sort((a, b) => b.similarity - a.similarity);
+}
+
+export function createSortedStringsBySimilarity(data: { id: string, text: string }[]) {
+    const vectorArray = data.map(obj => textToVector(obj.text, tokenizer));
+    return data.map((obj, index) => {
+        const similarityArray = vectorArray.map((vector, i) => {
+            if (i === index) return;
+            return {
+                id: data[i].id,
+                similarity: cosineSimilarity(vector, vectorArray[index])
+            }
+        }).filter(Boolean) as { id: string, similarity: number }[];
+        similarityArray.sort((a, b) => b.similarity - a.similarity);
+        return {
+            id: obj.id,
+            similar: similarityArray.map(obj => obj.id)
+        };
+    });
 }
 
 /*
