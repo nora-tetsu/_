@@ -39,10 +39,12 @@ type KuromojiToken = {
     pronunciation: string  // 発音
 }
 
+const posList = ["名詞", "動詞", "形容詞", "副詞", "未定義語"];
+
 // 以下Copilotからの提案
 // 文字列をベクトルに変換する関数
 function textToVector(text: string, tokenizer: any) {
-    const tokens = tokenizer.tokenize(text);
+    const tokens = tokenizer.tokenize(text).filter((obj: KuromojiToken) => posList.includes(obj.pos));
     const vector: { [key: string]: number } = {};
     tokens.forEach((token: KuromojiToken) => {
         if (vector[token.surface_form]) {
