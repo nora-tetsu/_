@@ -57,6 +57,11 @@ export class GyazoClient {
         if (req.title) formData.append('title', req.title);
         if (req.description) formData.append('desc', req.description);
         if (req.date) formData.append('created_at', Math.floor(req.date.getTime() / 1000).toString());
-        return this.upload(formData)
+        return await fetch('https://upload.gyazo.com/api/upload', {
+            method: 'POST',
+            body: formData,
+        })
+            .then(response => response.json())
+            .then(json => json as UploadResponse)
     }
 }
