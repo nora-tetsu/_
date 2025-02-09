@@ -51,6 +51,7 @@ declare global {
         sortEx(option: SortOption): this;
         changeOrder(index1: number, index2: number): this;
         search(text: string, keys?: string[], stringify?: boolean): any[];
+        removeDuplicatesAndSort(): any[];
     }
     interface ArrayConstructor {
         /** 2つの配列の共通要素を配列で返す */
@@ -369,6 +370,17 @@ Array.prototype.search = function (text: string, keys?: string[], stringify: boo
         }
         return filter;
     }
+}
+
+Array.prototype.removeDuplicatesAndSort = function () {
+    const countMap = this.reduce((acc, val) => {
+        acc[val] = (acc[val] || 0) + 1;
+        return acc;
+    }, {});
+
+    return Object.keys(countMap)
+        .sort((a, b) => countMap[b] - countMap[a])
+        .map(key => key);
 }
 
 Array.getCommonElement = function (arr1: any[], arr2: any[]) {
