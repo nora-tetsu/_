@@ -1,0 +1,63 @@
+/*
+二つの文字列の共通部分を抽出する
+
+2023/09/21
+ChatGPTに聞いて作ってもらったものを元に改良
+removeDuplicatesは完全に自作
+MyBookmarkManager（Chrome拡張）に組み込んで各ブックマークと関連するものをバーッと出せるようにしたい。
+*/
+
+function findCommonBetweenTwo(str1: string, str2: string) {
+  const commonSubstrings = [];
+  for (let i = 0; i < str1.length; i++) {
+    for (let j = 0; j < str2.length; j++) {
+      let match = '';
+      let x = i;
+      let y = j;
+      while (x < str1.length && y < str2.length && str1[x] === str2[y]) {
+        match += str1[x];
+        x++;
+        y++;
+      }
+      if (match.length > 0) {
+        commonSubstrings.push(match);
+      }
+    }
+  }
+  return Array.from(new Set(commonSubstrings));
+}
+function findAllCommonSubstrings(strings: string[]): string[] {
+  if (strings.length === 0) return [];
+  if (strings.length === 1) return [strings[0]];
+
+  let commonSubstrings = findCommonBetweenTwo(strings[0], strings[1]);
+
+  for (let i = 2; i < strings.length; i++) {
+    const newCommonSubstrings = [];
+    for (const common of commonSubstrings) {
+      newCommonSubstrings.push(...findCommonBetweenTwo(common, strings[i]));
+    }
+    commonSubstrings = Array.from(new Set(newCommonSubstrings));
+  }
+
+  return commonSubstrings;
+}
+function removeDuplicates(array: string[]) {
+  const result: string[] = [];
+  array.forEach((value, i) => {
+    const clone = array.slice();
+    clone.splice(i, 1);
+    const bool = clone.some(v => v.includes(value)); // 他の候補の一部になっているか
+    if (!bool) result.push(value);
+  })
+  return result;
+}
+/**
+ * 複数の文字列から共通部分を抽出する
+ * @param strings 
+ * @returns 
+ */
+export function findCommonStrings(strings: string[]) {
+  const commonParts = findAllCommonSubstrings(strings);
+  return removeDuplicates(commonParts);
+}
