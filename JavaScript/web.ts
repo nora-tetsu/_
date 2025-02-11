@@ -1,3 +1,31 @@
+declare global {
+    interface HTMLElement {
+        hide(): void;
+        show(): void;
+    }
+}
+
+HTMLElement.prototype.hide = function () {
+    this.classList.add('hidden');
+}
+HTMLElement.prototype.show = function () {
+    this.classList.remove('hidden');
+}
+
+// Copilot
+export function getCleanLink(url: string): string {
+    try {
+        const urlObj = new URL(url);
+
+        // プロトコル、ホスト、パス名を含むクリーンリンクを作成
+        const cleanUrl = `${urlObj.protocol}//${urlObj.host}${urlObj.pathname}`;
+
+        return cleanUrl;
+    } catch (error) {
+        console.error('Invalid URL:', error);
+        return '';
+    }
+}
 
 export function expandShortenedURL(url: string) {
     return fetch(url)
@@ -114,6 +142,118 @@ export class DynalistURL {
         this.url = url;
         this.id = url.replace(/https:\/\/dynalist.io\/d\/.*?#z=(.*)/, "$1");
         this.fileId = url.replace(/https:\/\/dynalist.io\/d\/([^#?]*)/, "$1");
+    }
+}
+
+type NodeSearchCondition = {
+    text?: string | RegExp;
+    note?: string | RegExp;
+    url?: string;
+}
+export type NodeContent = { text: string, note: string }
+export class DynalistNodeHtmlParser {
+    container: HTMLElement;
+    /**
+     * 
+     * @param container `.Node`要素
+     */
+    constructor(container: HTMLElement | Element) {
+        if (container.classList.contains('Node')) {
+            this.container = container as HTMLElement;
+        } else {
+            this.container = container.closest('.Node') as HTMLElement;
+        }
+    }
+    static getContainer(elm: HTMLElement) {
+        const container = elm.closest('.Node') as HTMLElement;
+        return new DynalistNodeHtmlParser(container);
+    }
+    static get nodes() {
+        return document.querySelectorAll('.Node') as NodeListOf<HTMLElement>;
+    }
+    static get root() {
+        return new DynalistNodeHtmlParser(this.nodes[0]);
+    }
+    static filter(condition: NodeSearchCondition, rule: "and" | "or" | "not" = "and") {
+        const results: DynalistNodeHtmlParser[] = [];
+        if (rule === "and") {
+            this.nodes.forEach(node => {
+                const parser = new DynalistNodeHtmlParser(node);
+                if (condition.text instanceof RegExp && !condition.text.test(parser.text)) return;
+                if (condition.note instanceof RegExp && !condition.note.test(parser.note)) return;
+                if (condition.url && parser.link.includes(condition.url)) return;
+                results.push(parser);
+            });
+        } else if (rule === "or") {
+            this.nodes.forEach(node => {
+                const parser = new DynalistNodeHtmlParser(node);
+                if (condition.text instanceof RegExp && condition.text.test(parser.text)) {
+                    results.push(parser);
+                    return;
+                }
+                if (condition.note instanceof RegExp && condition.note.test(parser.note)) {
+                    results.push(parser);
+                    return;
+                }
+                if (condition.url && parser.link.includes(condition.url)) {
+                    results.push(parser);
+                    return;
+                }
+            });
+        } else if (rule === "not") {
+            this.nodes.forEach(node => {
+                const parser = new DynalistNodeHtmlParser(node);
+                if (condition.text instanceof RegExp && condition.text.test(parser.text)) return;
+                if (condition.note instanceof RegExp && condition.note.test(parser.note)) return;
+                if (condition.url && parser.link.includes(condition.url)) return;
+                results.push(parser);
+            });
+        }
+        return results;
+    }
+    static find(condition: NodeSearchCondition, rule: "and" | "or" | "not" = "and") {
+        return this.filter(condition, rule)[0];
+    }
+    private get bulletElm() {
+        return this.container.querySelector('a.node-line.Node-bullet') as HTMLAnchorElement;
+    }
+    private get lineElm() {
+        return this.container.querySelector('.node-line.needsclick') as HTMLDivElement;
+    }
+    private get noteElm() {
+        return this.container.querySelector('.Node-note.needsclick') as HTMLDivElement;
+    }
+    private get childrenElm() {
+        return this.container.querySelector('.Node-children') as HTMLDivElement;
+    }
+    get link() {
+        return this.bulletElm.href;
+    }
+    get created() {
+        const regexp = /Created at ([0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}) on ([0-9]{4}\/[0-9]{1,2}\/[0-9]{1,2})/;
+        const match = this.bulletElm.title.match(regexp);
+        return match ? new Date(match[2] + ' ' + match[1]) : undefined;
+    }
+    get edited() {
+        const regexp = /edited at ([0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}) on ([0-9]{4}\/[0-9]{1,2}\/[0-9]{1,2})/;
+        const match = this.bulletElm.title.match(regexp);
+        return match ? new Date(match[2] + ' ' + match[1]) : undefined;
+    }
+    get text() {
+        return this.lineElm.textContent || "";
+    }
+    get note() {
+        return this.noteElm.textContent || "";
+    }
+    get contents() {
+        const result: NodeContent[] = [];
+        result.push({ text: this.text, note: this.note });
+        const childrenNodes = this.childrenElm.querySelectorAll('.Node') as NodeListOf<HTMLElement>;
+        childrenNodes.forEach(childNode => {
+            const parser = new DynalistNodeHtmlParser(childNode);
+            result.push({ text: parser.text, note: parser.note });
+        });
+        return result;
     }
 }
 
