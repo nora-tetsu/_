@@ -24,7 +24,7 @@ type SortOption = {
 
 declare global {
     interface String {
-        toClipboard(): this;
+        toClipboard(needsAlert?: boolean): this;
         convertLinkToHTML(): string;
         convertScrapboxToMarkdown(): string;
         convertMarkdownToScrapbox(): string;
@@ -80,17 +80,19 @@ declare global {
     }
 }
 
-String.prototype.toClipboard = function () {
+String.prototype.toClipboard = function (needsAlert = false) {
     const txt = this.toString();
     navigator.clipboard.writeText(txt)
         .then(() => {
-            //console.log("Text copied to clipboard...")
+            const display = (num: number) => txt.length < num ? txt : txt.slice(0, num) + '…';
             console.group('Copied to clipboard');
-            console.log(txt.length < 100 ? txt : txt.slice(0, 100) + '…');
+            console.log(display(100));
             console.groupEnd();
+            if (needsAlert) alert(`クリップボードにコピーしました。\n\n${display(30)}`);
         })
         .catch(err => {
-            console.log('Something went wrong', err)
+            console.log('Something went wrong', err);
+            if (needsAlert) alert('コピーできませんでした。');
         })
     return this;
 }
