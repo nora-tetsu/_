@@ -240,10 +240,10 @@ export class DynalistNodeHtmlParser {
         return match ? new Date(match[2] + ' ' + match[1]) : undefined;
     }
     get text() {
-        return this.lineElm.textContent || "";
+        return this.lineElm && this.lineElm.textContent ? this.lineElm.textContent : "";
     }
     get note() {
-        return this.noteElm.textContent || "";
+        return this.noteElm && this.noteElm.textContent ? this.noteElm.textContent : "";
     }
     get contents() {
         const result: NodeContent[] = [];
