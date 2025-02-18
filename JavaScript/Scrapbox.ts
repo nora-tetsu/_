@@ -38,7 +38,7 @@ function generateOPML(data: ScrapboxJson, replaceFunc: (str: string) => string):
     const doc = new DOMParser().parseFromString("<body></body>", "text/html");
     const body = doc.querySelector("body");
     data.pages.forEach(page => {
-        const children = page.lines.slice(1).filter(str => str);
+        const children = page.lines.slice(1).map(str => str.replace(/^\s+/, match => "\t".repeat(match.length))).filter(str => str);
         const outline = generateOutline(doc, page.title, children, replaceFunc);
         body.appendChild(outline);
     });
@@ -46,13 +46,39 @@ function generateOPML(data: ScrapboxJson, replaceFunc: (str: string) => string):
     return header + body.innerHTML + footer;
 }
 
-function generateOutline(doc: Document, text: string, children: string[], replaceFunc: (str: string) => string): Element {
-    const outline = doc.createElement("outline");
-    outline.setAttribute("text", replaceFunc(text));
+function generateOutline(doc: Document, text: string, children: string[], replaceFunc: (str: string) => string): HTMLElement {
+    function createOutline(text: string) {
+        const outline = doc.createElement("outline");
+        const replaced = replaceFunc(text);
+        outline.setAttribute("text", replaced.replace(/^\t*/, ""));
+        return outline;
+    }
 
-    children.forEach(child => {
-        const childOutline = generateOutline(doc, child, [], replaceFunc);
-        outline.appendChild(childOutline);
+    const outline = createOutline(text);
+    const elmArr: { elm: HTMLElement, num: number }[] = new Array(100);
+    elmArr[0] = { elm: outline, num: -1 };
+    const map = children.map((str, i) => {
+        const matchIndent = str.match(/^\t+/);
+        let indent = matchIndent && matchIndent[0] ? matchIndent[0].length + 1 : 1;
+        if (i === 0) indent = 1;
+        return { text: str, indent };
+    })
+
+    let previousIndent = 0;
+    map.forEach((child, i, arr) => {
+        let indent = child.indent;
+        const childOutline = createOutline(child.text);
+        if (i === 0) {
+            outline.appendChild(childOutline);
+        } else {
+            if (previousIndent < child.indent) {
+                indent = previousIndent + 1;
+                arr[i].indent = indent;
+            }
+            elmArr[indent - 1].elm.appendChild(childOutline);
+        }
+        elmArr[indent] = { elm: childOutline, num: i };
+        previousIndent = indent;
     });
 
     return outline;
