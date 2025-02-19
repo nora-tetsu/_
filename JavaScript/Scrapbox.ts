@@ -42,15 +42,28 @@ function generateOPML(data: ScrapboxJson, replaceFunc: (str: string) => string):
         const outline = generateOutline(doc, page.title, children, replaceFunc);
         body.appendChild(outline);
     });
+    const escaped = body.innerHTML.replace(/(?<!&)lt;/g, "&lt;").replace(/(?<!&)gt;/g, "&gt;").replace(/(?<!&)#039;/g, "&#039;");
 
-    return header + body.innerHTML + footer;
+    return header + escaped + footer;
+}
+
+/**
+ * 自動で処理されないらしい記号の処理　&を付けると&amp;になってしまうので&なしで置換
+ */
+function escapeHtml(unsafe: string) {
+    return unsafe
+        //.replace(/&/g, "&amp;") // 自動で処理される
+        .replace(/</g, "lt;")
+        .replace(/>/g, "gt;")
+        //.replace(/"/g, "&quot;") // 自動で処理される
+        .replace(/'/g, "#039;");
 }
 
 function generateOutline(doc: Document, text: string, children: string[], replaceFunc: (str: string) => string): HTMLElement {
     function createOutline(text: string) {
         const outline = doc.createElement("outline");
         const replaced = replaceFunc(text);
-        outline.setAttribute("text", replaced.replace(/^\t*/, ""));
+        outline.setAttribute("text", escapeHtml(replaced.replace(/^\t*/, "")));
         return outline;
     }
 
