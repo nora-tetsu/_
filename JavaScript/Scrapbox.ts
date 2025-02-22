@@ -1,4 +1,4 @@
-import { DOMParser } from "https://deno.land/x/deno_dom/deno-dom-wasm.ts";
+import { OpmlParser } from "./opml.ts";
 
 type User = {
     id: string;
@@ -25,46 +25,18 @@ type ScrapboxJson = {
 };
 
 function generateOPML(data: ScrapboxJson, replaceFunc: (str: string) => string): string {
-    const header = `<?xml version="1.0" encoding="UTF-8"?>
-<opml version="2.0">
-  <head>
-    <title>${data.displayName}</title>
-  </head>
-  <body>`;
-
-    const footer = `
-  </body>
-</opml>`;
-    const doc = new DOMParser().parseFromString("<body></body>", "text/html");
-    const body = doc.querySelector("body");
-    data.pages.forEach(page => {
+    const parser = new OpmlParser(data.displayName);
+    const outlines = data.pages.map(page => {
         const children = page.lines.slice(1).map(str => str.replace(/^\s+/, match => "\t".repeat(match.length))).filter(str => str);
-        const outline = generateOutline(doc, page.title, children, replaceFunc);
-        body.appendChild(outline);
-    });
-    const escaped = body.innerHTML.replace(/(?<!&)lt;/g, "&lt;").replace(/(?<!&)gt;/g, "&gt;").replace(/(?<!&)#039;/g, "&#039;");
-
-    return header + escaped + footer;
-}
-
-/**
- * 自動で処理されないらしい記号の処理　&を付けると&amp;になってしまうので&なしで置換
- */
-function escapeHtml(unsafe: string) {
-    return unsafe
-        //.replace(/&/g, "&amp;") // 自動で処理される
-        .replace(/</g, "lt;")
-        .replace(/>/g, "gt;")
-        //.replace(/"/g, "&quot;") // 自動で処理される
-        .replace(/'/g, "#039;");
-}
-
-function generateOutline(doc: Document, text: string, children: string[], replaceFunc: (str: string) => string): HTMLElement {
-    function createOutline(text: string) {
-        const outline = doc.createElement("outline");
-        const replaced = replaceFunc(text);
-        outline.setAttribute("text", escapeHtml(replaced.replace(/^\t*/, "")));
+        const outline = generateOutline(parser, page.title, children, replaceFunc);
         return outline;
+    })
+    return parser.parse(outlines);
+}
+
+function generateOutline(parser:OpmlParser, text: string, children: string[], replaceFunc: (str: string) => string): HTMLElement {
+    function createOutline(text: string) {
+        return parser.createOutlineElm(text.replace(/^\t*/, ""),"",replaceFunc);
     }
 
     const outline = createOutline(text);
