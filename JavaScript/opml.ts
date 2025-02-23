@@ -34,14 +34,15 @@ export class OpmlParser {
             .replace(/(?<!&)lt;/g, "&lt;")
             .replace(/(?<!&)gt;/g, "&gt;")
             .replace(/(?<!&)#039;/g, "&#039;")
-            .replace(/(?<!&)#13;/g, "&#13;");
+            .replace(/(?<!&)#x0A;/g, "&#x0A;")
+            .replace(/&nbsp;/g, "&#160;")
 
         return this.header + escaped + this.footer;
     }
-    createOutlineElm(content: string, note: string, replaceFunc: (str: string) => string) {
+    createOutlineElm(content: string, note: string, replaceFunc: (str: string) => string = (t) => t) {
         const outline = this.doc.createElement("outline");
         outline.setAttribute("text", escapeHtml(replaceFunc(content)));
-        if (note) outline.setAttribute("_note", escapeHtml(replaceFunc(note)));
+        if (note) outline.setAttribute("_note", escapeHtml(replaceFunc(note)).replace(/\r\n/g, "#x0A;").replace(/\n/g, "#x0A;"));
         return outline;
     }
     parseSimpleData(data: DataType[]) {
@@ -57,10 +58,12 @@ export class OpmlParser {
             }
         })
         key.forEach(category => {
-            const outline = this.createOutlineElm(category, "", (t) => t);
+            const outline = this.createOutlineElm(category, "");
             result[category].forEach(obj => {
-                const note = `${obj.date} ${obj.tags.map(tag => '#' + tag).join(" ")}#13;${obj.body.replace(/\n/g, "#13;")}`;
-                const elm = this.createOutlineElm(obj.title, note, (t) => t);
+                const note = `${obj.date} ${obj.tags.map(tag => '#' + tag).join(" ")}`;
+                const elm = this.createOutlineElm(obj.title, note);
+                const bodyElm = this.createOutlineElm("", obj.body);
+                elm.appendChild(bodyElm);
                 outline.appendChild(elm);
             })
             outlines.push(outline);
