@@ -11,10 +11,15 @@ type DataType = {
 export class OpmlParser {
     title: string;
     private doc: Document;
+    private outlines: HTMLElement[] = [];
     constructor(title: string) {
         this.title = title;
         const doc = new DOMParser().parseFromString("<body></body>", "text/html");
         this.doc = doc;
+    }
+    addOutline(outline: HTMLElement) {
+        this.outlines.push(outline);
+
     }
     private get header() {
         return `<?xml version="1.0" encoding="UTF-8"?>
@@ -27,9 +32,10 @@ export class OpmlParser {
     private footer = `
       </body>
     </opml>`;
-    parse(outlines: HTMLElement[]) {
+    parse(outlines?: HTMLElement[]) {
         const body = this.doc.querySelector("body") as HTMLBodyElement;
-        outlines.forEach(elm => body.appendChild(elm));
+        const _outlines = outlines || this.outlines;
+        _outlines.forEach(elm => body.appendChild(elm));
         const escaped = body.innerHTML
             .replace(/(?<!&)lt;/g, "&lt;")
             .replace(/(?<!&)gt;/g, "&gt;")
