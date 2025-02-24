@@ -1,3 +1,4 @@
+import { OpmlParser } from "./opml.ts";
 
 type DataType = {
     id: number;
@@ -168,17 +169,17 @@ type Data = {
 };
 
 export function parseHierarchicalText(text: string): Data[] {
-    const formatted = text.replace(/\n(\.+? )/g, "\nZYXZYXZYX\n$1");
-    const nodes = formatted.split("ZYXZYXZYX");
+    const formatted = text.replace(/(\r\n|\r)/g, "\n").replace(/\n(\.+)/g, "\nZYXZYXZYX\n$1");
+    const nodes = formatted.split("ZYXZYXZYX\n").filter(str => str.trim().startsWith("."));
+    console.log(nodes.length);
     const data = nodes.map(str => {
         const lines = str.trim().split("\n");
-        const match = lines[0].match(/^(\.+) (.*)/) as RegExpMatchArray;
+        const match = lines[0].match(/^(\.+)(.*)/) as RegExpMatchArray;
         const depth = match[1].length;
-        const title = match[2];
-        const body = lines.slice(1).join("\n");
-        console.log({ title, body, depth })
+        const title = match[2] ? match[2].replace(/\t(\d|\,)+$/, "") : "";
+        const body = lines.length > 1 ? lines.slice(1).join("\n") : "";
         return { title, body, depth }
-    })
+    }).filter(obj => obj) as { title: string, body: string, depth: number }[];
     const result: Data[] = [];
     const indent: Data[] = new Array(100);
     data.forEach((obj, i) => {
@@ -188,8 +189,9 @@ export function parseHierarchicalText(text: string): Data[] {
             body: obj.body,
             children: [],
         }
+        result.push(d);
         if (i === 0 || obj.depth === 1) {
-            result.push(d);
+
         } else if (data[i - 1].depth < obj.depth) {
             obj.depth = data[i - 1].depth + 1;
             result[i - 1].children.push(d.id);
@@ -216,3 +218,45 @@ body
 
 console.log(JSON.stringify(parseText(input), null, 2));
 */
+
+export function hierarchicalTextToOpml(text: string, title: string) {
+    const data = parseHierarchicalText(text);
+    const parser = new OpmlParser(title);
+    function dataToOutline(d: Data) {
+        const outline = parser.createOutlineElm(d.title, "");
+        if (d.body) outline.appendChild(parser.createOutlineElm("", d.body));
+        d.children.forEach(id => {
+            const child = data.find(c => c.id === id);
+            if (child) outline.appendChild(dataToOutline(child));
+        })
+        return outline;
+    }
+    data.forEach(d => parser.addOutline(dataToOutline(d)));
+    const opml = parser.parse();
+    return opml;
+}
+
+function getDirnameFromPath(path: string) {
+    return path.split("/").slice(-2)[0];
+}
+
+export function halna2Opml(filename: string, dirPath: string, outputDir: string) {
+    if (!dirPath.endsWith("/")) dirPath += "/";
+    if (!outputDir.endsWith("/")) outputDir += "/";
+    const dirName = getDirnameFromPath(dirPath);
+    const text = Deno.readTextFileSync(dirPath + filename);
+    const opml = hierarchicalTextToOpml(text, filename);
+    Deno.writeTextFileSync(`${outputDir}${dirName}_${filename}.opml`, opml);
+    console.log(`Done: ${filename}.opml`);
+}
+
+export function halna2OpmlInFolder(dirPath: string, outputDir: string) {
+    const files = Deno.readDirSync(dirPath);
+    for (const file of files) {
+        if (file.isFile && file.name.endsWith(".hol")) {
+            halna2Opml(file.name, dirPath, outputDir);
+        } else if (file.isDirectory) {
+            halna2OpmlInFolder(dirPath + file.name + "/", outputDir);
+        }
+    }
+}
