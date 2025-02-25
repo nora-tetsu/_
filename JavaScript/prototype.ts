@@ -1,4 +1,4 @@
-type DateDataObject = {
+type DateDataObjectOld = {
     yyyy: number,
     yy: string,
     m: number,
@@ -9,6 +9,21 @@ type DateDataObject = {
     hh: string,
     n: number,
     nn: string,
+    s: number,
+    ss: string,
+    day: number,
+}
+type DateDataObject = {
+    YYYY: number,
+    YY: string,
+    M: number,
+    MM: string,
+    D: number,
+    DD: string,
+    h: number,
+    hh: string,
+    m: number,
+    mm: string,
     s: number,
     ss: string,
     day: number,
@@ -61,9 +76,13 @@ declare global {
         clearTime(): Date;
         getDayOfYear(): number;
         getWeekOfYear(): number;
+        getDataObjectOld(): DateDataObjectOld;
         getDataObject(): DateDataObject;
         createNoid(): string;
+        /** 旧版 formatStringを使うこと */
         format(format: string): string;
+        /** 既定値は YYYY-MM-DDThh:mm:ss */
+        formatString(format: string): string;
         getUnixTime(): number;
         /** 一日の最初と最後のUnix時間を取得する */
         getUnixTimeRange(): {
@@ -410,7 +429,7 @@ Date.prototype.getWeekOfYear = function () {
     return weeks + 1;
 };
 
-Date.prototype.getDataObject = function () {
+Date.prototype.getDataObjectOld = function () {
     return {
         yyyy: this.getFullYear(),
         yy: this.getFullYear().toString().slice(-2),
@@ -427,15 +446,32 @@ Date.prototype.getDataObject = function () {
         day: this.getDay(),
     }
 }
+Date.prototype.getDataObject = function () {
+    return {
+        YYYY: this.getFullYear(),
+        YY: this.getFullYear().toString().slice(-2),
+        M: this.getMonth() + 1,
+        MM: ('00' + (this.getMonth() + 1)).slice(-2),
+        D: this.getDate(),
+        DD: ('00' + this.getDate()).slice(-2),
+        h: this.getHours(),
+        hh: ('00' + this.getHours()).slice(-2),
+        m: this.getMinutes(),
+        mm: ('00' + this.getMinutes()).slice(-2),
+        s: this.getSeconds(),
+        ss: ('00' + this.getSeconds()).slice(-2),
+        day: this.getDay(),
+    }
+}
 
 Date.prototype.createNoid = function () {
     const str = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
-    const { yy, m, d, h, n, s } = this.getDataObject();
+    const { yy, m, d, h, n, s } = this.getDataObjectOld();
     return str[Number(yy)] + str[m - 1] + str[d] + str[h] + str[n] + str[s] + this.getMilliseconds();
 }
 
 Date.prototype.format = function (format = 'yyyy-mm-ddThh:nn') {
-    const { yyyy, yy, mm, m, dd, d, hh, h, nn, n, ss, s } = this.getDataObject();
+    const { yyyy, yy, mm, m, dd, d, hh, h, nn, n, ss, s } = this.getDataObjectOld();
     return format.replace('yyyy', yyyy.toString()).replace('yy', yy)
         .replace('mm', mm).replace('m', m.toString())
         .replace('dd', dd).replace('d', d.toString())
@@ -444,6 +480,19 @@ Date.prototype.format = function (format = 'yyyy-mm-ddThh:nn') {
         .replace('ss', ss).replace('s', s.toString())
         .replace('年月日', `${yyyy}年${m}月${d}日`)
         .replace('時分', `${h}時${n}分`)
+}
+
+
+Date.prototype.formatString = function (format = 'YYYY-MM-DDThh:mm:ss') {
+    const { YYYY, YY, MM, M, DD, D, hh, h, mm, m, ss, s } = this.getDataObject();
+    return format.replace('YYYY', YYYY.toString()).replace('YY', YY)
+        .replace('MM', MM).replace('M', M.toString())
+        .replace('DD', DD).replace('D', D.toString())
+        .replace('hh', hh).replace('h', h.toString())
+        .replace('mm', mm).replace('m', m.toString())
+        .replace('ss', ss).replace('s', s.toString())
+        .replace('年月日', `${YYYY}年${M}月${D}日`)
+        .replace('時分', `${h}時${m}分`)
 }
 
 Date.prototype.getUnixTime = function () {
