@@ -133,6 +133,7 @@ export class DynalistNode {
     private doc: DynalistDocument;
     shouldBeIgnored: boolean; // 無効な項目でないか
     hasChildren: boolean;
+    isNote: boolean;
     isCodeblock: boolean;
     /** 「|| 」で始まるノードかどうか（子孫項目を箇条書きにするかどうか） */
     isParentOfBullets: boolean;
@@ -155,6 +156,7 @@ export class DynalistNode {
         const IGNORE_LIST = ['//'];
         const c = this.data.content;
         this.hasChildren = Boolean(this.data.children && this.data.children.length);
+        this.isNote = c.startsWith("📃");
         this.isCodeblock = Boolean(c.match(/^(?:C|c)ode:\s*(.*)/));
         this.shouldBeIgnored = IGNORE_LIST.some(value => c.startsWith(value));
         this.isParentOfBullets = c.startsWith('|| ') || (!this.isCodeblock && this.data.note.includes('<ul>'));
@@ -287,7 +289,9 @@ export class DynalistNode {
             } else if (!isParent || includeParent) { // detailsでなく、かつ自身を取得する必要がある時
                 // Code:で始まるノードはnote欄を取得
                 const match = content.match(/^(?:C|c)ode:\s*(.*)/);
-                if (match && note) {
+                if (target.isNote && note) {
+                    result.push(note);
+                } else if (match && note) {
                     const fileName = match[1];
                     if (fileName) {
                         const hasPeriod = fileName.includes('.');
