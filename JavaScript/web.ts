@@ -154,8 +154,10 @@ export class DynalistURL {
     constructor(url: string) {
         // https://dynalist.io/d/7F7AbyNsJf7K--oz0vtxVZSF#z=_yaThzLWYEcFoW1CK5aOEFEI
         this.url = url;
-        this.id = url.replace(/https:\/\/dynalist.io\/d\/.*?#z=(.*)/, "$1");
-        this.fileId = url.replace(/https:\/\/dynalist.io\/d\/([^#?]*)/, "$1");
+        const matchId = url.match(/https:\/\/dynalist.io\/d\/.*?#z=(.*)/);
+        this.id = matchId ? matchId[1] : "";
+        const matchFileId = url.match(/https:\/\/dynalist.io\/d\/([^#?]*)/);
+        this.fileId = matchFileId ? matchFileId[1] : "";
     }
 }
 
