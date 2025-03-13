@@ -13,8 +13,13 @@ export class DynalistClient {
                     token: this.token,
                 }),
             })
-                .then(response => response.json())
-                .then(json => json.files as FileData[])
+                .then(response => response.json() as Promise<{
+                    _code: string,
+                    _msg: string,
+                    root_file_id: string,
+                    files: FileData[],
+                }>)
+                .then(json => json.files)
         },
         edit: async (changes: ChangeFileRequest[]) => {
             return await fetch('https://dynalist.io/api/v1/file/edit', {
@@ -24,11 +29,16 @@ export class DynalistClient {
                     changes: changes,
                 }),
             })
-                .then(response => response.json())
+                .then(response => response.json() as Promise<{
+                    _code: string,
+                    _msg: string,
+                    results: boolean[],
+                    created?: string[],
+                }>)
         }
     }
     doc = {
-        read: async (fileId: string) => {
+        readOrig: async (fileId: string) => {
             return await fetch('https://dynalist.io/api/v1/doc/read', {
                 method: 'POST',
                 body: JSON.stringify({
@@ -36,8 +46,17 @@ export class DynalistClient {
                     'file_id': fileId,
                 }),
             })
-                .then(response => response.json())
-                .then(json => json.nodes as NodeData[])
+                .then(response => response.json() as Promise<{
+                    _code: string,
+                    _msg: string,
+                    file_id: string,
+                    title: string,
+                    version: number,
+                    nodes: NodeData[]
+                }>)
+        },
+        read: async (fileId: string) => {
+            return this.doc.readOrig(fileId).then(json => json.nodes);
         },
         edit: async (fileId: string, changes: ChangeContentRequest[]) => {
             return await fetch('https://dynalist.io/api/v1/doc/edit', {
@@ -48,7 +67,11 @@ export class DynalistClient {
                     changes
                 }),
             })
-                .then(response => response.json())
+                .then(response => response.json() as Promise<{
+                    _code: string,
+                    _msg: string,
+                    new_node_ids: string[],
+                }>)
         },
         /** 指定したノードに子項目を追加する
          * indexは0でtop、-1でend */
