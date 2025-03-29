@@ -1,4 +1,4 @@
-import { OpmlParser } from "./opml.ts";
+import { OpmlParser } from "Module/opml.ts";
 
 type DataType = {
     id: number;

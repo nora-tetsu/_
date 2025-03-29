@@ -1,5 +1,5 @@
 // 2025/01/16 17:02
-import type { ImageData, UploadRequest, UploadResponse } from "./type.ts";
+import type { ImageData, UploadRequest, UploadResponse } from "Gyazo/type.ts";
 
 export class GyazoClient {
     token: string;

@@ -1,9 +1,9 @@
-import { marked } from "https://deno.land/x/marked@1.0.2/mod.ts";
-import { DOMParser } from "https://deno.land/x/deno_dom@v0.1.43/deno-dom-wasm.ts";
-import "_/JavaScript/prototype.ts";
-import { getObjectType } from "_/JavaScript/util.ts";
-import { DynalistClient } from "./client.ts";
-import type { NodeData } from "./type.ts";
+import { marked } from "marked";
+import { DOMParser } from "DOM";
+import "Module/prototype.ts";
+import { getObjectType } from "Module/util.ts";
+import { DynalistClient } from "Dynalist/client.ts";
+import type { NodeData } from "Dynalist/type.ts";
 
 export class DynalistDocument {
     nodes: DynalistNode[] = [];

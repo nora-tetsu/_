@@ -1,5 +1,5 @@
 /// <reference lib="deno.ns" />
-import { OpmlParser } from "../JavaScript/opml.ts";
+import { OpmlParser } from "Module/opml.ts";
 
 type DataInfo = {
     filename: string;
