@@ -1,4 +1,19 @@
 
+const DATABASE_ID = {
+    hololive_events: "1b9c674359f180b18a3af577200df8dc",
+    hololive_diary: "1b9c674359f18012ab65f1370bf7e276",
+}
+
+function generateDatabaseObject(database_id: string) {
+    return {
+        "type": "database_id",
+        "database_id": database_id,
+    }
+}
+
+export const hololiveEventsParent = generateDatabaseObject(DATABASE_ID.hololive_events);
+export const hololiveDiaryParent = generateDatabaseObject(DATABASE_ID.hololive_diary);
+
 export type HololiveEventsProps = {
     内容: string,
     タイトル: string,
