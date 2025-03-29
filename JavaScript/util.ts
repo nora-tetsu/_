@@ -75,3 +75,18 @@ export function getObjectType(target: unknown, type?: string) {
     return replace;
   }
 }
+
+// Copilot
+export function getCleanLink(url: string): string {
+  try {
+    const urlObj = new URL(url);
+
+    // プロトコル、ホスト、パス名を含むクリーンリンクを作成
+    const cleanUrl = `${urlObj.protocol}//${urlObj.host}${urlObj.pathname}`;
+
+    return cleanUrl;
+  } catch (error) {
+    console.error('Invalid URL:', error);
+    return '';
+  }
+}
