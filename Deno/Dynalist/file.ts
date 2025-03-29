@@ -565,6 +565,20 @@ export class DynalistParser {
         roop(node);
         return result;
     }
+    /** あるノードの親ノードを遡って取得する */
+    getAncestors(data: NodeData) {
+        function getParent(nodes: NodeData[], childId: string) {
+            return nodes.find(node => node.children?.includes(childId));
+        }
+        const parents: NodeData[] = [];
+        let parent = getParent(this.data, data.id);
+        while (parent) {
+            parents.push(parent);
+            parent = getParent(this.data, parent.id);
+        }
+        parents.reverse();
+        return parents;
+    }
     textGetter(data: NodeData) {
         if (!data) return () => "";
         return (type: "plain" | "plainAll" | "markdownEx" | "html" | "br") => {

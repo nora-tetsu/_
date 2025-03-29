@@ -1,11 +1,12 @@
 import type { FileData, ChangeFileRequest, NodeData, ChangeContentRequest, SendToInboxRequest } from "Dynalist/type.ts";
 
 export class DynalistClient {
-    token: string;
+    private token: string;
     constructor(token: string) {
         this.token = token;
     }
     file = {
+        /** `https://dynalist.io/api/v1/file/list` */
         list: async () => {
             return await fetch('https://dynalist.io/api/v1/file/list', {
                 method: 'POST',
@@ -21,6 +22,7 @@ export class DynalistClient {
                 }>)
                 .then(json => json.files)
         },
+        /** `https://dynalist.io/api/v1/file/edit` */
         edit: async (changes: ChangeFileRequest[]) => {
             return await fetch('https://dynalist.io/api/v1/file/edit', {
                 method: 'POST',
@@ -38,6 +40,7 @@ export class DynalistClient {
         }
     }
     doc = {
+        /** `https://dynalist.io/api/v1/doc/read` */
         readOrig: async (fileId: string) => {
             return await fetch('https://dynalist.io/api/v1/doc/read', {
                 method: 'POST',
@@ -55,9 +58,11 @@ export class DynalistClient {
                     nodes: NodeData[]
                 }>)
         },
+        /** `https://dynalist.io/api/v1/doc/read` */
         read: async (fileId: string) => {
-            return this.doc.readOrig(fileId).then(json => json.nodes);
+            return await this.doc.readOrig(fileId).then(json => json.nodes);
         },
+        /** `https://dynalist.io/api/v1/doc/edit` */
         edit: async (fileId: string, changes: ChangeContentRequest[]) => {
             return await fetch('https://dynalist.io/api/v1/doc/edit', {
                 method: 'POST',
@@ -136,6 +141,12 @@ export class DynalistClient {
     }
 }
 
+/**
+ * あるノードの親ノードを遡って取得する
+ * @param nodes 対象となるノード群
+ * @param child ターゲットのidまたはNodeData
+ * @returns 
+ */
 export function getParents(nodes: NodeData[], child: string | NodeData) {
     if (typeof child === "string") {
         const find = nodes.find(node => node.id === child);
