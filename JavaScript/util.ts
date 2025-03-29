@@ -61,3 +61,17 @@ export function findCommonStrings(strings: string[]) {
   const commonParts = findAllCommonSubstrings(strings);
   return removeDuplicates(commonParts);
 }
+
+/**
+ * @param target タイプを確認したい対象
+ * @param type 文字列を入れるとタイプを照合してブール値を返し、省略するとタイプを文字列で返す
+ */
+export function getObjectType(target: unknown, type?: string) {
+  const str = Object.prototype.toString.call(target);
+  const replace = str.replace(/^\[object ([^\]]*)\]/, '$1');
+  if (type) {
+    return replace.toLocaleLowerCase() === type.toLocaleLowerCase();
+  } else {
+    return replace;
+  }
+}
