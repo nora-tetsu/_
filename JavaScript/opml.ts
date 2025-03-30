@@ -1,6 +1,6 @@
-import { DOMParser } from "DOM";
+import { DOMParser, HTMLDocument } from "DOM";
 
-type DataType = {
+export type DataType = {
     title: string;
     date: string;
     body: string;
@@ -10,11 +10,11 @@ type DataType = {
 
 export class OpmlParser {
     title: string;
-    private doc: Document;
+    private doc: Document | HTMLDocument;
     private outlines: HTMLElement[] = [];
     constructor(title: string) {
         this.title = title;
-        const doc = new DOMParser().parseFromString("<body></body>", "text/html");
+        const doc = new DOMParser().parseFromString("<body></body>", "text/html") as HTMLDocument;
         this.doc = doc;
     }
     addOutline(outline: HTMLElement) {
@@ -75,14 +75,6 @@ export class OpmlParser {
             outlines.push(outline);
         })
         return this.parse(outlines);
-    }
-    static simpleJsonToOpml(jsonPath: string, outputPath: string, title: string) {
-        const json = Deno.readTextFileSync(jsonPath);
-        const data = JSON.parse(json) as DataType[];
-        const parser = new OpmlParser(title);
-        const opml = parser.parseSimpleData(data);
-        Deno.writeTextFileSync(outputPath, opml);
-        console.log(`Done: ${outputPath}`);
     }
 }
 

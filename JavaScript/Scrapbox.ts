@@ -16,7 +16,7 @@ type Page = {
     lines: string[];
 };
 
-type ScrapboxJson = {
+export type ScrapboxJson = {
     name: string;
     displayName: string;
     exported: number;
@@ -34,9 +34,9 @@ function generateOPML(data: ScrapboxJson, replaceFunc: (str: string) => string):
     return parser.parse(outlines);
 }
 
-function generateOutline(parser:OpmlParser, text: string, children: string[], replaceFunc: (str: string) => string): HTMLElement {
+function generateOutline(parser: OpmlParser, text: string, children: string[], replaceFunc: (str: string) => string): HTMLElement {
     function createOutline(text: string) {
-        return parser.createOutlineElm(text.replace(/^\t*/, ""),"",replaceFunc);
+        return parser.createOutlineElm(text.replace(/^\t*/, ""), "", replaceFunc);
     }
 
     const outline = createOutline(text);
@@ -127,17 +127,8 @@ function replaceNoratetsu(text: string) {
     return replaced;
 }
 
-export async function scrapbox2opml(jsonpath: string, replaceFunc: (str: string) => string) {
-    const json = Deno.readTextFileSync(jsonpath);
-    const data = JSON.parse(json) as ScrapboxJson;
-    const opmlContent = generateOPML(data, replaceFunc);
-    await Deno.writeTextFile(`${data.name}.opml`, opmlContent);
-    console.log("OPML file generated successfully.");
-}
-
-export function scrapbox2opmlSimple(jsonpath: string) {
-    return scrapbox2opml(jsonpath, replaceSimple);
-}
-export function scrapbox2opmlComplex(jsonpath: string) {
-    return scrapbox2opml(jsonpath, replaceNoratetsu);
+export const scrapboxJson2Opml = {
+    simple: (data: ScrapboxJson) => generateOPML(data, replaceSimple),
+    complex: (data: ScrapboxJson) => generateOPML(data, replaceNoratetsu),
+    manual: generateOPML,
 }

@@ -46,9 +46,6 @@ export class DynalistDocument {
             return bool;
         })
     }
-    writeData(filepath: string) {
-        Deno.writeTextFileSync(filepath, JSON.stringify(this.currentData, null, '\t'));
-    }
     printData() {
         console.log(this.currentData);
     }

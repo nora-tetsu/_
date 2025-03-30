@@ -1,7 +1,7 @@
 import Turndown from "npm:turndown";
 import { Readability } from "npm:@mozilla/readability";
 
-
+/** Turndown */
 export function html2markdown(element: HTMLElement) {
     return new Turndown({
         headingStyle: 'atx',
@@ -10,10 +10,6 @@ export function html2markdown(element: HTMLElement) {
         codeBlockStyle: 'fenced',
         emDelimiter: '*',
     }).turndown(element);
-}
-
-export function getHtmlInfo(element: HTMLElement) {
-    return new Readability(element).parse();
 }
 
 function getSelectionHtml() {
@@ -38,13 +34,15 @@ function getSelectionHtml() {
 export function getArticleInfo() {
     const url = location.href;
     const selection = getSelectionHtml();
+    const readDocument = new Readability(document).parse();
+    if (!readDocument) return;
 
     const {
         title,
         byline,
         content,
         publishedTime
-    } = getHtmlInfo(document.cloneNode(true));
+    } = readDocument;
 
     return {
         title,

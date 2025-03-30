@@ -113,13 +113,11 @@ export class YouTubeClient {
     searchChannel(query: string) {
         const url = `https://www.googleapis.com/youtube/v3/search?q=${query}&key=${this.key}&type=channel&part=snippet`;
         return fetch(url).then(response => response.json() as Promise<YouTubeData>);
-        // Deno.writeTextFileSync(`YouTube_Search_${query}.json`, JSON.stringify(res, null, "\t"));
     }
     /** `https://www.googleapis.com/youtube/v3/channels` */
     retrieveChannel(channelId: string) {
         const url = `https://www.googleapis.com/youtube/v3/channels?id=${channelId}&key=${this.key}&part=snippet,contentDetails,statistics,status`;
         return fetch(url).then(response => response.json() as Promise<YouTubeData>);
-        // Deno.writeTextFileSync(`YouTube_Channel_${channelId}.json`, JSON.stringify(res, null, "\t"));
     }
     /** `https://www.googleapis.com/youtube/v3/playlistItems` */
     async getChannelVideos(playlistId: string) {
@@ -142,6 +140,5 @@ export class YouTubeClient {
         }
 
         return results;
-        //Deno.writeTextFileSync(`YouTube_${playlistId}_videos.json`, JSON.stringify(results, null, "\t"));
     }
 }

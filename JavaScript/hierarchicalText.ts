@@ -218,7 +218,7 @@ body
 console.log(JSON.stringify(parseText(input), null, 2));
 */
 
-function hierarchicalTextToOutlines(parser: OpmlParser, text: string, filename: string) {
+export function hierarchicalTextToOutlines(parser: OpmlParser, text: string, filename: string) {
     const rootOutline = parser.createOutlineElm(filename, "");
     const data = parseHierarchicalText(text);
     const done: number[] = [];
@@ -249,50 +249,4 @@ export function hierarchicalTextToOpml(text: string, title: string) {
     hierarchicalTextToOutlines(parser, text, title);
     const opml = parser.parse();
     return opml;
-}
-
-function getDirnameFromPath(path: string) {
-    return path.split("/").slice(-2)[0];
-}
-
-export function halna2Opml(filename: string, dirPath: string, outputDir: string) {
-    if (!dirPath.endsWith("/")) dirPath += "/";
-    if (!outputDir.endsWith("/")) outputDir += "/";
-    const dirName = getDirnameFromPath(dirPath);
-    const text = Deno.readTextFileSync(dirPath + filename);
-    const opml = hierarchicalTextToOpml(text, filename);
-    Deno.writeTextFileSync(`${outputDir}${dirName}_${filename}.opml`, opml);
-    console.log(`Done: ${filename}.opml`);
-}
-
-export function halna2OpmlInFolder(dirPath: string, outputDir: string) {
-    const files = Deno.readDirSync(dirPath);
-    for (const file of files) {
-        if (file.isFile && file.name.endsWith(".hol")) {
-            halna2Opml(file.name, dirPath, outputDir);
-        } else if (file.isDirectory) {
-            halna2OpmlInFolder(dirPath + file.name + "/", outputDir);
-        }
-    }
-}
-
-export function halna2OpmlInFolder2(dirPath: string) {
-    if (!dirPath.endsWith("/")) dirPath += "/";
-    const parser = new OpmlParser("HalnaOutline");
-    function roop(dirPath: string){
-        const files = Deno.readDirSync(dirPath);
-        for (const file of files) {
-            if (file.isFile && file.name.endsWith(".hol")) {
-                const text = Deno.readTextFileSync(dirPath + file.name);
-                const dirName = getDirnameFromPath(dirPath);
-                hierarchicalTextToOutlines(parser, text, dirName + "_" + file.name);
-            } else if (file.isDirectory) {
-                roop(dirPath + file.name + "/");
-            }
-        }
-    }
-    roop(dirPath);
-    const opml = parser.parse();
-    Deno.writeTextFileSync(`./HalnaOutline.opml`, opml);
-    console.log(`Done: ./HalnaOutline.opml`);
 }
