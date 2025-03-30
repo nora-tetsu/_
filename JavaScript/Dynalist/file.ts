@@ -2,8 +2,8 @@ import { marked } from "marked";
 import { DOMParser } from "DOM";
 import "Module/prototype.ts";
 import { getObjectType } from "Module/util.ts";
-import { DynalistClient } from "Dynalist/client.ts";
-import type { NodeData } from "Dynalist/type.ts";
+import { DynalistClient } from "./client.ts";
+import type { NodeData } from "./type.ts";
 
 export class DynalistDocument {
     nodes: DynalistNode[] = [];

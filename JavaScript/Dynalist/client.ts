@@ -1,4 +1,4 @@
-import type { FileData, ChangeFileRequest, NodeData, ChangeContentRequest, SendToInboxRequest } from "Dynalist/type.ts";
+import type { FileData, ChangeFileRequest, NodeData, ChangeContentRequest, SendToInboxRequest } from "./type.ts";
 
 export class DynalistClient {
     private token: string;
