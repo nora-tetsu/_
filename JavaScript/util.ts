@@ -90,3 +90,16 @@ export function getCleanLink(url: string): string {
     return '';
   }
 }
+
+export function createPath(dirPath: string, filePath: string) {
+  dirPath = dirPath.replace(/(.*?)(\/*)$/, "$1") + "/";
+  return dirPath + filePath;
+}
+export function analyzePath(path: string) {
+  path = path.replace(/\/$/, "");
+  const match = path.match(/(.*?)\/([^/]*)/);
+  return {
+    dir: match ? match[1] : path,
+    name: match ? match[2] : "",
+  }
+}
