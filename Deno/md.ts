@@ -1,50 +1,29 @@
 /// <reference lib="deno.ns" />
 import { OpmlParser } from "Module/opml.ts";
+import { getFilesData } from "DenoModule/file.ts";
+import { text2MarkdownData } from "Module/markdown.ts";
+import { analyzePath } from "Module/util.ts"
 
 type DataInfo = {
     filename: string;
-    frontmatter: string;
+    frontmatter: unknown;
     body: string;
     dir: string;
+    marked: string;
 }
 
-function getMdData(file: Deno.DirEntry, dirPath: string) {
-    const txt = Deno.readTextFileSync(dirPath + file.name);
-    if (txt.startsWith("---")) {
-        const split = txt.split("---");
-        const yaml = split[1].trim();
-        const body = split.slice(2).join("---").trim();
+export function getMdFiles(rootPath: string) {
+    return getFilesData(rootPath, async (filename: string, txt: string, dirPath: string) => {
+        if (!filename.endsWith(".md")) return;
+        const { body, marked, frontmatter } = await text2MarkdownData(txt);
         return {
-            filename: file.name,
-            frontmatter: yaml,
+            filename,
             body,
+            marked,
+            frontmatter,
             dir: dirPath,
         } as DataInfo;
-    } else {
-        return {
-            filename: file.name,
-            frontmatter: "",
-            body: txt,
-            dir: dirPath,
-        } as DataInfo;
-    }
-}
-
-export function getMdFiles(dirPath: string) {
-    const result: DataInfo[] = [];
-    const files = Deno.readDirSync(dirPath);
-    for (const file of files) {
-        if (file.isFile && file.name.endsWith(".md")) {
-            const fileData = getMdData(file, dirPath);
-            result.push(fileData);
-        } else if (file.isDirectory) {
-            if (file.name.startsWith(".")) continue;
-            const dir = dirPath + file.name + "/";
-            const childrenData = getMdFiles(dir);
-            result.push(...childrenData);
-        }
-    }
-    return result;
+    }).filter(v => v) as DataInfo[];
 }
 
 function getDirnameFromPath(path: string) {
@@ -54,7 +33,7 @@ function getDirnameFromPath(path: string) {
 export function mdFilesToOpml(dirPath: string, outputDir = "./", bodyToNote = true) {
     if (!dirPath.endsWith("/")) dirPath += "/";
     if (!outputDir.endsWith("/")) outputDir += "/";
-    const vault = getDirnameFromPath(dirPath);
+    const vault = analyzePath(dirPath).name;
     const parser = new OpmlParser(vault);
     const mdData = getMdFiles(dirPath);
     const parents: { elm: HTMLElement, dir: string }[] = [];
