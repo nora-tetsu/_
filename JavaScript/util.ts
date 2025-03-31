@@ -100,6 +100,6 @@ export function analyzePath(path: string) {
   const match = path.match(/(.*?)\/([^/]*)/);
   return {
     dir: match ? match[1] : path,
-    name: match ? match[2] : "",
+    name: match ? match[2] : "", // path.split("/").slice(-2)[0]
   }
 }

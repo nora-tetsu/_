@@ -2,7 +2,7 @@
 import { OpmlParser } from "../JavaScript/opml.ts";
 import { getFilesData } from "./file.ts";
 import { text2MarkdownData } from "../JavaScript/markdown.ts";
-import { analyzePath } from "../JavaScript/util.ts"
+import { analyzePath, createPath } from "../JavaScript/util.ts"
 
 type DataInfo = {
     filename: string;
@@ -26,13 +26,7 @@ export function getMdFiles(rootPath: string) {
     }).filter(v => v) as DataInfo[];
 }
 
-function getDirnameFromPath(path: string) {
-    return path.split("/").slice(-2)[0];
-}
-
 export function mdFilesToOpml(dirPath: string, outputDir = "./", bodyToNote = true) {
-    if (!dirPath.endsWith("/")) dirPath += "/";
-    if (!outputDir.endsWith("/")) outputDir += "/";
     const vault = analyzePath(dirPath).name;
     const parser = new OpmlParser(vault);
     const mdData = getMdFiles(dirPath);
@@ -43,7 +37,7 @@ export function mdFilesToOpml(dirPath: string, outputDir = "./", bodyToNote = tr
         if (findParent) {
             parent = findParent.elm;
         } else {
-            parent = parser.createOutlineElm(getDirnameFromPath(data.dir), "`" + data.dir + "`");
+            parent = parser.createOutlineElm(analyzePath(data.dir).name, "`" + data.dir + "`");
             parents.push({ elm: parent, dir: data.dir });
         }
         const fileOutline = parser.createOutlineElm(data.filename, data.frontmatter);
@@ -65,17 +59,18 @@ export function mdFilesToOpml(dirPath: string, outputDir = "./", bodyToNote = tr
     if (parents.length) {
         const outlines: HTMLElement[] = parents.map(p => p.elm);
         const opml = parser.parse(outlines);
-        Deno.writeTextFileSync(`${outputDir}${vault}.opml`, opml);
+        Deno.writeTextFileSync(createPath(outputDir, `${vault}.opml`), opml);
         console.log(`Done: ${vault}.opml`);
     }
 }
 
-export function mdFilesToOpmlPerSubdir(dirPath: string, vault: string) {
-    const files = Deno.readDirSync(dirPath + vault);
+export function mdFilesToOpmlPerSubdir(rootPath: string, vault: string) {
+    const vaultPath = createPath(rootPath, vault);
+    const files = Deno.readDirSync(vaultPath);
     for (const file of files) {
         if (file.isDirectory) {
             if (file.name.startsWith(".")) continue;
-            const dir = dirPath + vault + "/" + file.name + "/";
+            const dir = createPath(vaultPath, file.name);
             mdFilesToOpml(dir, `./${vault}/`);
         }
     }
