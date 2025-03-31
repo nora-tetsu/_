@@ -1,4 +1,5 @@
 import { OpmlParser } from "Module/opml.ts";
+import { text2MarkdownData } from "Module/markdown.ts";
 
 type DataType = {
     id: number;
@@ -249,4 +250,14 @@ export function hierarchicalTextToOpml(text: string, title: string) {
     hierarchicalTextToOutlines(parser, text, title);
     const opml = parser.parse();
     return opml;
+}
+
+/** 本文がMarkdownで書かれた階層付きテキストをparseする */
+export async function parseMarkedHText(text: string) {
+    const data = parseHierarchicalText(text);
+    const map = await Promise.all(data.map(async (obj) => {
+        const markdown = await text2MarkdownData(obj.body);
+        return Object.assign(obj, markdown);
+    }))
+    return map;
 }
