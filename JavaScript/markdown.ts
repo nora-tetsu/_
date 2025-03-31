@@ -1,5 +1,7 @@
 import Turndown from "npm:turndown";
 import { Readability } from "npm:@mozilla/readability";
+import { marked } from "marked";
+import * as Yaml from "yaml";
 
 /** Turndown */
 export function html2markdown(element: HTMLElement) {
@@ -54,3 +56,32 @@ export function getArticleInfo() {
     }
 }
 
+const renderer = new marked.Renderer();
+renderer.link = ({ href, title, text }) => {
+    return `<a href="${href}" title="${title || ''}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+};
+
+const parser = (text: string) => marked.parse(text, {
+    gfm: true,
+    breaks: true,
+    renderer,
+})
+
+export async function text2MarkdownData(text: string) {
+    if (text.startsWith("---")) {
+        const split = text.split("---");
+        const yaml = split[1].trim();
+        const body = split.slice(2).join("---").trim();
+        return {
+            body,
+            marked: await parser(body),
+            frontmatter: Yaml.parse(yaml),
+        }
+    } else {
+        return {
+            body: text,
+            marked: await parser(text),
+            frontmatter: null,
+        }
+    }
+}
