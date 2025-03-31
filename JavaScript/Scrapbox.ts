@@ -1,4 +1,4 @@
-import { OpmlParser } from "Module/opml.ts";
+import { OpmlParser } from "./opml.ts";
 
 type User = {
     id: string;

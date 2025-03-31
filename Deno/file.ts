@@ -1,4 +1,4 @@
-import { createPath } from "Module/util.ts";
+import { createPath } from "../JavaScript/util.ts";
 
 export function getFilesData<T>(rootPath: string, fileDataGetter: (filename: string, text: string, dirPath: string, stat: Partial<Deno.FileInfo>) => T|Promise<T>) {
     const result: T[] = [];

@@ -1,8 +1,8 @@
 /// <reference lib="deno.ns" />
-import { OpmlParser } from "Module/opml.ts";
-import { getFilesData } from "DenoModule/file.ts";
-import { text2MarkdownData } from "Module/markdown.ts";
-import { analyzePath } from "Module/util.ts"
+import { OpmlParser } from "../JavaScript/opml.ts";
+import { getFilesData } from "./file.ts";
+import { text2MarkdownData } from "../JavaScript/markdown.ts";
+import { analyzePath } from "../JavaScript/util.ts"
 
 type DataInfo = {
     filename: string;

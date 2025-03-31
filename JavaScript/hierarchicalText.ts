@@ -1,5 +1,5 @@
-import { OpmlParser } from "Module/opml.ts";
-import { text2MarkdownData } from "Module/markdown.ts";
+import { OpmlParser } from "./opml.ts";
+import { text2MarkdownData } from "./markdown.ts";
 
 type DataType = {
     id: number;

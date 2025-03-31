@@ -1,7 +1,7 @@
 import Turndown from "npm:turndown";
 import { Readability } from "npm:@mozilla/readability";
-import { marked } from "marked";
-import * as Yaml from "yaml";
+import { marked } from "https://deno.land/x/marked@1.0.2/mod.ts";
+import * as Yaml from "https://deno.land/std@0.207.0/yaml/mod.ts";
 
 /** Turndown */
 export function html2markdown(element: HTMLElement) {

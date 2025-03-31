@@ -1,6 +1,6 @@
-import { OpmlParser, type DataType } from "Module/opml.ts";
-import { hierarchicalTextToOpml, hierarchicalTextToOutlines } from "Module/hierarchicalText.ts";
-import { scrapboxJson2Opml, type ScrapboxJson } from "Module/Scrapbox.ts";
+import { OpmlParser, type DataType } from "../JavaScript/opml.ts";
+import { hierarchicalTextToOpml, hierarchicalTextToOutlines } from "../JavaScript/hierarchicalText.ts";
+import { scrapboxJson2Opml, type ScrapboxJson } from "../JavaScript/Scrapbox.ts";
 
 export function simpleJsonToOpml(jsonPath: string, outputPath: string, title: string) {
     const json = Deno.readTextFileSync(jsonPath);

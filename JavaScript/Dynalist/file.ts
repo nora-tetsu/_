@@ -1,7 +1,7 @@
-import { marked } from "marked";
-import { DOMParser } from "DOM";
-import "Module/prototype.ts";
-import { getObjectType } from "Module/util.ts";
+import { marked } from "https://deno.land/x/marked@1.0.2/mod.ts";
+import { DOMParser } from "https://deno.land/x/deno_dom@v0.1.43/deno-dom-wasm.ts";
+import "../prototype.ts";
+import { getObjectType } from "../util.ts";
 import { DynalistClient } from "./client.ts";
 import type { NodeData } from "./type.ts";
 
