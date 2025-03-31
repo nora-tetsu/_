@@ -97,7 +97,7 @@ export function createPath(dirPath: string, filePath: string) {
 }
 export function analyzePath(path: string) {
   path = path.replace(/\/$/, "");
-  const match = path.match(/(.*?)\/([^/]*)/);
+  const match = path.match(/(.*?\/)([^/]*)$/);
   return {
     dir: match ? match[1] : path,
     name: match ? match[2] : "", // path.split("/").slice(-2)[0]
