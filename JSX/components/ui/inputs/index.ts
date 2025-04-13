@@ -1,2 +1,9 @@
 export { Checkbox } from "./Checkbox.tsx";
-//export { TextInput } from "./TextInput.tsx";
+export { ColorInput } from "./Color.tsx";
+export { DatetimeInput } from "./Datetime.tsx";
+export { NumberInput } from "./Number.tsx";
+export { Radio } from "./Radio.tsx";
+export { SearchInput } from "./Search.tsx";
+export { Select } from "./Select.tsx";
+export { TextInput } from "./Text.tsx";
+export { Textarea } from "./Textarea.tsx";
