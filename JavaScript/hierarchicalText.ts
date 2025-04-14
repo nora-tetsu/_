@@ -171,14 +171,23 @@ type Data = {
 
 export function parseHierarchicalText(text: string): Data[] {
     const formatted = text.replace(/(\r\n|\r)/g, "\n").replace(/\n(\.+)/g, "\nZYXZYXZYX\n$1");
-    const nodes = formatted.split("ZYXZYXZYX\n").filter(str => str.trim().startsWith("."));
-    const data = nodes.map(str => {
+    //const nodes = formatted.split("ZYXZYXZYX\n").filter(str => str.trim().startsWith("."));
+    const nodes = formatted.split("ZYXZYXZYX\n");
+    const data = nodes.map((str, i) => {
         const lines = str.trim().split("\n");
-        const match = lines[0].match(/^(\.+)(.*)/) as RegExpMatchArray;
-        const depth = match[1].length;
-        const title = match[2] ? match[2].replace(/\t(\d|\,)+$/, "") : "";
-        const body = lines.length > 1 ? lines.slice(1).join("\n") : "";
-        return { title, body, depth }
+        if (i === 0) {
+            return {
+                title: "root",
+                body: str,
+                depth: 0,
+            }
+        } else {
+            const match = lines[0].match(/^(\.+)(.*)/) as RegExpMatchArray;
+            const depth = match[1].length;
+            const title = match[2] ? match[2].replace(/\t(\d|\,)+$/, "") : "";
+            const body = lines.length > 1 ? lines.slice(1).join("\n") : "";
+            return { title, body, depth }
+        }
     }).filter(obj => obj) as { title: string, body: string, depth: number }[];
     const result: Data[] = [];
     const indent: Data[] = new Array(100);
