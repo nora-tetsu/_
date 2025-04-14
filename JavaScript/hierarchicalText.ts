@@ -199,7 +199,7 @@ export function parseHierarchicalText(text: string): Data[] {
             children: [],
         }
         result.push(d);
-        if (i === 0 || obj.depth === 1) {
+        if (i === 0 || obj.depth === 0) {
 
         } else if (data[i - 1].depth < obj.depth) {
             obj.depth = data[i - 1].depth + 1;
