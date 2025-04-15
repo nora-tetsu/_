@@ -1,3 +1,155 @@
+export class UnixTime {
+  unix: number;
+  constructor(unix: number | Date) {
+    if (unix instanceof Date) {
+      unix = Math.floor(unix.getTime() / 1000);
+    }
+    this.unix = unix;
+  }
+  get Date() {
+    return new Date(this.unix * 1000);
+  }
+  get year() {
+    return this.Date.getFullYear();
+  }
+  get month() {
+    return this.Date.getMonth() + 1;
+  }
+  get date() {
+    return this.Date.getDate();
+  }
+  get hour() {
+    return this.Date.getHours();
+  }
+  get minute() {
+    return this.Date.getMinutes();
+  }
+  get second() {
+    return this.Date.getSeconds();
+  }
+  getDateString(withTime = true) {
+    const f = (num: number) => ("00" + num).slice(-2);
+    if (withTime) {
+      return `${this.year}/${f(this.month)}/${f(this.date)} ${f(this.hour)}:${f(this.minute)
+        }`;
+    } else {
+      return `${this.year}/${f(this.month)}/${f(this.date)}`;
+    }
+  }
+  getJpDateString() {
+    return this.Date.toLocaleString("sv-SE", {
+      timeZone: "Asia/Tokyo",
+    }).replace(" ", "T") + "+09:00";
+  }
+  isIncluded(year: string, month: string) {
+    const target = this.Date;
+    const y = Number(year);
+    const m = Number(month);
+    const start = new Date();
+    start.setFullYear(y);
+    start.setMonth(m - 1);
+    start.setDate(1);
+    const end = new Date();
+    end.setFullYear(y);
+    end.setMonth(m);
+    end.setDate(1);
+    return (target >= start) && (target < end);
+  }
+  /**
+   * numが正の場合は○後より手前、負の場合は○前より後の時true
+   * @param num
+   * @param type
+   * @param target
+   * @returns
+   */
+  within(
+    num: number,
+    type: "year" | "month" | "date" | "hour" | "minute" | "second",
+    target = new Date(),
+  ) {
+    switch (type) {
+      case "year":
+        target.setFullYear(target.getFullYear() + num);
+        break;
+      case "month":
+        target.setMonth(target.getMonth() + num);
+        break;
+      case "date":
+        target.setDate(target.getDate() + num);
+        break;
+      case "hour":
+        target.setHours(target.getHours() + num);
+        break;
+      case "minute":
+        target.setMinutes(target.getMinutes() + num);
+        break;
+      case "second":
+        target.setSeconds(target.getSeconds() + num);
+        break;
+      default:
+    }
+    return num > 0 ? this.Date < target : this.Date > target;
+  }
+  static getNewUnixId(idList: number[], date = new Date()) {
+    let unix = Math.floor(date.getTime() / 1000);
+    const find = (unix: number) => idList.includes(unix);
+    while (find(unix)) {
+      unix++;
+      if (!find(unix)) break;
+    }
+    return unix;
+  }
+}
+
+export function random(x: number, y: number) {
+  return Math.floor(Math.random() * (y - x + 1)) + x; // 最小値x、最大値yの乱数を作る
+}
+
+// https://qiita.com/fernet/items/a99928e73c8daca6f6af
+function compile(cond: string[][]) {
+  const joinAnd = (arr: string[]) =>
+    `^(?=[\\s\\S]*${arr.join(")(?=[\\s\\S]*")})`;
+  const joinOr = (arr: string[]) => `(?:${arr.join("|")})`;
+  const escape = (str: string) => str.replace(/(?=[(){}\[\].*\\^$?])/, "\\");
+  let rx = joinOr(cond.map((inner) => joinAnd(inner.map(escape))));
+  rx = rx.replace(/=\[\\s\\S\]\*-/g, "![\\s\\S]*");
+  return new RegExp(rx);
+}
+
+export function search(target: string | string[], condition: string) {
+  const cond = ((text: string) => {
+    const cond: string[][] = [];
+    const or = text.trim().split(/\s+OR\s+/);
+    or.forEach((str) => {
+      if (str) cond.push(str.toLocaleLowerCase().split(/\s+/));
+    });
+    return cond;
+  })(condition);
+
+  if (typeof target === "string") {
+    return compile(cond).test(target.toLocaleLowerCase());
+  } else {
+    const map = target.map((v) => v.toLocaleLowerCase());
+    const or: string[][] = [];
+    const not: string[] = [];
+    cond.forEach((arr) => {
+      or.push(arr.filter((v) => !v.startsWith("-")));
+      not.push(...arr.filter((v) => v.startsWith("-")));
+    });
+
+    // NOTは位置に関係なく除外
+    if (map.some((str) => not.some((v) => str.includes(v.replace(/^-/, ""))))) {
+      return false;
+    }
+
+    return or.some((arr) => {
+      return arr.every((v) => {
+        return map.some((str) => str.includes(v));
+      });
+    });
+  }
+}
+
 /*
 二つの文字列の共通部分を抽出する
 

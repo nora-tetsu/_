@@ -23,6 +23,32 @@ export function expandShortenedURL(url: string) {
         });
 }
 
+export function copyToClipboard(txt: string) {
+    return navigator.clipboard.writeText(txt)
+        .then(() => {
+            //console.log("Text copied to clipboard...")
+            console.group("Copied to clipboard");
+            console.log(txt.length < 100 ? txt : txt.slice(0, 100) + "…");
+            console.groupEnd();
+        })
+        .catch((err) => {
+            console.log("Failed to copy", err);
+        });
+}
+
+
+export function setCaret(target: HTMLElement, length: number) {
+    const selection = globalThis.getSelection() as Selection;
+    const range = document.createRange();
+    const offset = length;
+    const child = target.firstChild;
+    if (!child) return;
+    range.setStart(child, offset);
+    range.setEnd(child, offset);
+    selection.removeAllRanges();
+    selection.addRange(range);
+}
+
 type NodeSearchCondition = {
     text?: string | RegExp;
     note?: string | RegExp;
