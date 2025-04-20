@@ -1,5 +1,5 @@
 import { marked } from "https://deno.land/x/marked@1.0.2/mod.ts";
-import { DOMParser } from "https://deno.land/x/deno_dom@v0.1.43/deno-dom-wasm.ts";
+//import { DOMParser } from "jsr:@b-fuze/deno-dom";
 import "../prototype.ts";
 import { getObjectType } from "../util.ts";
 import { DynalistClient } from "./client.ts";
@@ -451,14 +451,14 @@ export class DynalistNode {
         // preタグ内の余計な改行を除去
         const dom = new DOMParser().parseFromString(result, "text/html")!;
         const pre = dom.getElementsByTagName('pre');
-        pre.forEach(elm => {
+        Array.from(pre).forEach(elm => {
             const code = elm.querySelector('code');
             if (code) code.innerHTML = code.innerHTML.trim();
             elm.innerHTML = elm.innerHTML.replace(/\n\n/g, '\n');
         })
         // codeタグ内のbracketタグ、aタグを除去
         const code = dom.getElementsByTagName('code');
-        code.forEach(elm => {
+        Array.from(code).forEach(elm => {
             elm.innerHTML = elm.innerHTML.replace(
                 new RegExp(`&lt;span class="bracket"&gt;(.+?)&lt;/span&gt;`, 'g'),
                 '$1'
@@ -476,7 +476,7 @@ export class DynalistNode {
         })
         // ブラケットのないURLを別窓で開く
         const a = dom.getElementsByTagName('a');
-        a.forEach(elm => {
+        Array.from(a).forEach(elm => {
             const href = elm.getAttribute('href');
             if (!href || href.startsWith('#note')) return;
             elm.setAttribute('target', '_blank');
@@ -488,15 +488,13 @@ export class DynalistNode {
     }
 }
 
-/*
-const dynalist = new Dynalist(token);
-dynalist.file.list();
-*/
 
 export class DynalistParser {
     data: NodeData[];
-    constructor(data: NodeData[]) {
+    DOMParser: typeof DOMParser;
+    constructor(data: NodeData[], domParser: typeof DOMParser) {
         this.data = data;
+        this.DOMParser = domParser;
     }
     pick(id: string) {
         return this.data.find(d => d.id === id);
@@ -790,7 +788,7 @@ export class DynalistParser {
                         const target = this.data.find(obj => obj.id === id);
                         if (!target) return '';
                         const text = this.textGetter(target)("br");
-                        const dom = new DOMParser().parseFromString(text, "text/html")!;
+                        const dom = new this.DOMParser().parseFromString(text, "text/html")!;
                         const findIndex = footnotes.findIndex(str => str.match(`</a>: ${text}</p>`));
                         if (findIndex > -1) { // 既に同じリンクによる脚注がある時
                             return `<a href="#note${findIndex + 1}" title="${dom.body.textContent}"><sup>*${findIndex + 1}</sup></a>`;
@@ -815,16 +813,16 @@ export class DynalistParser {
         if (footnotes.length) result += '\n<hr />\n' + footnotes.join('\n');
 
         // preタグ内の余計な改行を除去
-        const dom = new DOMParser().parseFromString(result, "text/html")!;
+        const dom = new this.DOMParser().parseFromString(result, "text/html")!;
         const pre = dom.getElementsByTagName('pre');
-        pre.forEach(elm => {
+        Array.from(pre).forEach(elm => {
             const code = elm.querySelector('code');
             if (code) code.innerHTML = code.innerHTML.trim();
             elm.innerHTML = elm.innerHTML.replace(/\n\n/g, '\n');
         })
         // codeタグ内のbracketタグ、aタグを除去
         const code = dom.getElementsByTagName('code');
-        code.forEach(elm => {
+        Array.from(code).forEach(elm => {
             elm.innerHTML = elm.innerHTML.replace(
                 new RegExp(`&lt;span class="bracket"&gt;(.+?)&lt;/span&gt;`, 'g'),
                 '$1'
@@ -842,7 +840,7 @@ export class DynalistParser {
         })
         // ブラケットのないURLを別窓で開く
         const a = dom.getElementsByTagName('a');
-        a.forEach(elm => {
+        Array.from(a).forEach(elm => {
             const href = elm.getAttribute('href');
             if (!href || href.startsWith('#note')) return;
             elm.setAttribute('target', '_blank');
