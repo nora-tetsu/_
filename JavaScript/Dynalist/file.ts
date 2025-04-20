@@ -850,4 +850,5 @@ export class DynalistParser {
 
         return result;
     }
+    static markdownEx2Html = this.prototype.convertToHTML;
 }
