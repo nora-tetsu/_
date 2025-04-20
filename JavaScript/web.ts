@@ -1,3 +1,7 @@
+// deno-lint-ignore-file no-window
+import Turndown from "npm:turndown";
+import { Readability } from "npm:@mozilla/readability";
+
 declare global {
     interface HTMLElement {
         hide(): void;
@@ -48,6 +52,65 @@ export function setCaret(target: HTMLElement, length: number) {
     selection.removeAllRanges();
     selection.addRange(range);
 }
+
+
+/** Turndown */
+export function html2markdown(element: HTMLElement) {
+    return new Turndown({
+        headingStyle: 'atx',
+        hr: '---',
+        bulletListMarker: '-',
+        codeBlockStyle: 'fenced',
+        emDelimiter: '*',
+    }).turndown(element);
+}
+
+function getSelectionHtml() {
+    let html = "";
+    if (typeof window.getSelection != "undefined") {
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount) {
+            const container = document.createElement("div");
+            for (let i = 0, len = sel.rangeCount; i < len; ++i) {
+                container.appendChild(sel.getRangeAt(i).cloneContents());
+            }
+            html = container.innerHTML;
+        }
+    }
+    /* else if (typeof document.selection != "undefined") {
+        if (document.selection.type == "Text") {
+            html = document.selection.createRange().htmlText;
+        }
+    }*/
+    const div = document.createElement("div");
+    div.innerHTML = html;
+    return div;
+}
+
+export function getArticleInfo() {
+    const url = location.href;
+    const selection = getSelectionHtml();
+    const readDocument = new Readability(document).parse();
+    if (!readDocument) return;
+
+    const {
+        title,
+        byline,
+        content,
+        publishedTime
+    } = readDocument;
+
+    return {
+        title,
+        url,
+        author: byline,
+        html: content,
+        markdown: html2markdown(selection || content),
+        published: publishedTime,
+    }
+}
+export const getArticleData = getArticleInfo;
+
 
 type NodeSearchCondition = {
     text?: string | RegExp;
