@@ -1,3 +1,4 @@
+// deno-lint-ignore-file no-namespace
 
 const DATABASE_ID = {
     hololive_events: "1b9c674359f180b18a3af577200df8dc",
@@ -145,5 +146,61 @@ export function createDiaryProperties(prop: HololiveDiaryProps) {
                 return { id: target };
             })
         },
+    }
+}
+
+export namespace HololiveEvents {
+    export type Props = HololiveEventsProps;
+    export const parent = hololiveEventsParent;
+    export const createProperties = createEventsProperties;
+}
+
+export namespace HololiveDiary {
+    export type Props = HololiveDiaryProps;
+    export const parent = hololiveDiaryParent;
+    export const createProperties = createDiaryProperties;
+}
+
+export namespace FanArts {
+    export type Props = {
+        Subject: string;
+        URL: string;
+        Genre: string[];
+        Date: { start: string, end?: string },
+    }
+    export const parent = generateDatabaseObject("1dc3c17be12980b18b34d27fd6dffcde");
+    export const createProperties = (prop: FanArts.Props) => {
+        let date;
+        if (!prop.Date.start) {
+            date = null;
+        } else {
+            date = {
+                "start": prop.Date.start,
+                "end": prop.Date.end || null,
+                "time_zone": null
+            }
+        }
+        return {
+            "Subject": {
+                "title": [
+                    {
+                        "text": {
+                            "content": prop.Subject
+                        }
+                    }
+                ]
+            },
+            "URL": {
+                "url": prop.URL || null
+            },
+            "Genre": {
+                "multi_select": prop.Genre.map(type => {
+                    return { name: type };
+                })
+            },
+            "Date": {
+                "date": date
+            },
+        }
     }
 }
