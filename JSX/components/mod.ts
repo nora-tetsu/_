@@ -3,3 +3,4 @@ export * from "./ui/inputs/index.ts";
 export * from "./ui/FloatButton.tsx";
 export * from "./ui/Button.tsx";
 export * from "./ui/Modal.tsx";
+export * from "./ui/Anchor.tsx";
