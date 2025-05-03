@@ -1,17 +1,19 @@
 //import { YouTube } from 'https://deno.land/x/youtube@v0.3.0/mod.ts';
 
+type YouTubeThumnail = {
+    default: { url: string, width: number, height: number },
+    medium?: { url: string, width: number, height: number },
+    high?: { url: string, width: number, height: number },
+    standard?: { url: string, width: number, height: number },
+    maxres?: { url: string, width: number, height: number },
+}
+
 type YouTubeSnippet = {
     publishedAt: string;
     channelId: string;
     title: string;
     description: string;
-    thumbnails: {
-        default: { url: string, width: number, height: number },
-        medium: { url: string, width: number, height: number },
-        high: { url: string, width: number, height: number },
-        standard: { url: string, width: number, height: number },
-        maxres: { url: string, width: number, height: number },
-    },
+    thumbnails: YouTubeThumnail;
     channelTitle: string;
     tags: string[];
     categoryId: string;
@@ -23,38 +25,40 @@ type YouTubeSnippet = {
     defaultAudioLanguage: string;
 }
 
+type YouTubeItem = {
+    kind: string;
+    etag: string;
+    id: string;
+    snippet: YouTubeSnippet,
+    contentDetails: {
+        duration: string;
+        dimension: string;
+        definition: string;
+        caption: string;
+        licensedContent: boolean;
+        contentRating: unknown;
+        projection: string;
+    },
+    status: {
+        uploadStatus: string;
+        privacyStatus: string;
+        license: string;
+        embeddable: boolean;
+        publicStatsViewable: boolean;
+        madeForKids: boolean;
+    },
+    statistics: {
+        viewCount: string;
+        likeCount: string;
+        favoriteCount: string;
+        commentCount: string;
+    }
+}
+
 type YouTubeData = {
     kind: string;
     etag: string;
-    items: {
-        kind: string;
-        etag: string;
-        id: string;
-        snippet: YouTubeSnippet,
-        contentDetails: {
-            duration: string;
-            dimension: string;
-            definition: string;
-            caption: string;
-            licensedContent: boolean;
-            contentRating: unknown;
-            projection: string;
-        },
-        status: {
-            uploadStatus: string;
-            privacyStatus: string;
-            license: string;
-            embeddable: boolean;
-            publicStatsViewable: boolean;
-            madeForKids: boolean;
-        },
-        statistics: {
-            viewCount: string;
-            likeCount: string;
-            favoriteCount: string;
-            commentCount: string;
-        }
-    }[];
+    items: YouTubeItem[];
     pageInfo: {
         totalResults: number;
         resultsPerPage: number;
@@ -112,16 +116,76 @@ export class YouTubeClient {
     /** `https://www.googleapis.com/youtube/v3/search` */
     searchChannel(query: string) {
         const url = `https://www.googleapis.com/youtube/v3/search?q=${query}&key=${this.key}&type=channel&part=snippet`;
-        return fetch(url).then(response => response.json() as Promise<YouTubeData>);
+        return fetch(url).then(response => response.json() as Promise<
+            {
+                kind: string,
+                etag: string,
+                nextPageToken: string,
+                regionCode: string,
+                pageInfo: { totalResults: number, resultsPerPage: number },
+                items: {
+                    kind: string,
+                    etag: string,
+                    id: {
+                        kind: string,
+                        channelId: string
+                    },
+                    snippet: {
+                        publishedAt: string,
+                        channelId: string,
+                        title: string,
+                        description: string,
+                        thumbnails: YouTubeThumnail,
+                        channelTitle: string,
+                        liveBroadcastContent: string,
+                        publishTime: string
+                    }
+                }[]
+            }>);
     }
     /** `https://www.googleapis.com/youtube/v3/channels` */
     retrieveChannel(channelId: string) {
         const url = `https://www.googleapis.com/youtube/v3/channels?id=${channelId}&key=${this.key}&part=snippet,contentDetails,statistics,status`;
-        return fetch(url).then(response => response.json() as Promise<YouTubeData>);
+        return fetch(url).then(response => response.json() as Promise<{
+            kind: string;
+            etag: string;
+            pageInfo: { totalResults: number, resultsPerPage: number },
+            items: {
+                kind: string,
+                etag: string,
+                id: string,
+                snippet: {
+                    title: string,
+                    description: string,
+                    customUrl: string,
+                    publishedAt: string,
+                    thumbnails: YouTubeThumnail,
+                    localized: {
+                        title: string,
+                        description: string
+                    },
+                    country: string
+                },
+                contentDetails: {
+                    relatedPlaylists: { likes: string, uploads: string }
+                },
+                statistics: {
+                    viewCount: string,
+                    subscriberCount: string,
+                    hiddenSubscriberCount: boolean,
+                    videoCount: string
+                },
+                status: {
+                    privacyStatus: string,
+                    isLinked: boolean,
+                    longUploadsStatus: string
+                }
+            }[]
+        }>);
     }
     /** `https://www.googleapis.com/youtube/v3/playlistItems` */
     async getChannelVideos(playlistId: string) {
-        let results: unknown[] = [];
+        let results: YouTubeItem[] = [];
         let hasMore = true;
         let cursor: string | null | undefined = undefined;
         let url: string;
@@ -140,5 +204,30 @@ export class YouTubeClient {
         }
 
         return results;
+    }
+    /**
+     * 検索語でヒットするトップのアカウントの投稿動画情報を取得する
+     * @param query 検索語
+     */
+    async test_getVideosByQuery(query: string) {
+        const search = await this.searchChannel(query);
+        const map = search.items.map((item) => {
+            return {
+                title: item.snippet.title,
+                channelId: item.id.channelId,
+            }
+        })
+        console.log(map);
+        if (map.length == 0) return;
+        const retrieve = await this.retrieveChannel(map[0].channelId);
+        if (retrieve.items.length == 0) return;
+        const playlistId = retrieve.items[0].contentDetails.relatedPlaylists.uploads;
+        console.log(playlistId);
+        const result = await this.getChannelVideos(playlistId);
+        return {
+            title: map[0].title,
+            channel: retrieve.items[0],
+            videos: result,
+        }
     }
 }
