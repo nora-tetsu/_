@@ -253,8 +253,8 @@ export async function getTweetInfo(container: HTMLElement) {
     const matchUser = userElmText.match(/(.*)@([^·]*)/);
     const [userName, userId] = matchUser ? [matchUser[1], matchUser[2]] : [userElmText, ""]; // by Copilot
 
-    const textElm = container.querySelector(`[data-testid="tweetText"]`) as HTMLDivElement;
-    emoji2alt(textElm);
+    const textElm = container.querySelector(`[data-testid="tweetText"]`) as HTMLDivElement | null;
+    if (textElm) emoji2alt(textElm);
 
     const imgElms = container.querySelectorAll(`[data-testid="tweetPhoto"]`);
     const images = Array.from(imgElms).map(elm => {
@@ -263,8 +263,7 @@ export async function getTweetInfo(container: HTMLElement) {
         return img.src.replace(/\?format=([^&]*).*/, ".$1");
     }).filter(Boolean) as string[];
 
-    const anchors = textElm.querySelectorAll("a");
-    const links = await Promise.all(Array.from(anchors).map(async (anchor) => {
+    const links = !textElm ? [] : await Promise.all(Array.from(textElm.querySelectorAll("a")).map(async (anchor) => {
         let url = anchor.href;
         url = (url.startsWith("https://t.co/") ? await expandShortenedURL(url) : url) as string;
         if (url.startsWith('https://x.com/hashtag/')) return;
@@ -296,7 +295,7 @@ export async function getTweetInfo(container: HTMLElement) {
         url,
         userName,
         userId,
-        text: textElm.textContent as string,
+        text: textElm && textElm.textContent ? textElm.textContent : "",
         images,
         links,
         time: timeElm ? timeElm.dateTime : "",
