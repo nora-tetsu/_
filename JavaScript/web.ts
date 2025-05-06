@@ -55,7 +55,8 @@ export function setCaret(target: HTMLElement, length: number) {
 
 
 /** Turndown */
-export function html2markdown(element: HTMLElement) {
+export function html2markdown(element: string) {
+    //element = element.cloneNode(true) as HTMLElement;
     return new Turndown({
         headingStyle: 'atx',
         hr: '---',
@@ -70,11 +71,9 @@ function getSelectionHtml() {
     if (typeof window.getSelection != "undefined") {
         const sel = window.getSelection();
         if (sel && sel.rangeCount) {
-            const container = document.createElement("div");
             for (let i = 0, len = sel.rangeCount; i < len; ++i) {
-                container.appendChild(sel.getRangeAt(i).cloneContents());
+                html += sel.getRangeAt(i).toString();
             }
-            html = container.innerHTML;
         }
     }
     /* else if (typeof document.selection != "undefined") {
@@ -82,15 +81,15 @@ function getSelectionHtml() {
             html = document.selection.createRange().htmlText;
         }
     }*/
-    const div = document.createElement("div");
-    div.innerHTML = html;
-    return div;
+    return html;
 }
 
 export function getArticleInfo() {
     const url = location.href;
     const selection = getSelectionHtml();
-    const readDocument = new Readability(document).parse();
+    const clonedDocument = document.implementation.createHTMLDocument();
+    clonedDocument.documentElement.innerHTML = document.documentElement.outerHTML;
+    const readDocument = new Readability(clonedDocument).parse();
     if (!readDocument) return;
 
     const {
@@ -230,6 +229,7 @@ export class DynalistNodeHtmlParser {
  * @returns 
  */
 export async function getTweetInfo(container: HTMLElement) {
+    container = container.cloneNode(true) as HTMLElement;
     function emoji2alt(parent: HTMLElement) {
         if (!parent) return;
         const emojis = parent.querySelectorAll(`img[draggable="false"]`) as NodeListOf<HTMLImageElement>;
@@ -309,6 +309,7 @@ export async function getTweetInfo(container: HTMLElement) {
  * @returns 
  */
 export function getBskyInfo(container: HTMLElement) {
+    container = container.cloneNode(true) as HTMLElement;
     const urlElm = container.querySelector(`a[href*="/post/"][data-tooltip]`) as HTMLAnchorElement | null;
     if (!urlElm) {
         alert("ツイートが見つかりません。");
