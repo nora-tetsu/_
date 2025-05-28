@@ -1,6 +1,11 @@
 import { marked } from "https://deno.land/x/marked@1.0.2/mod.ts";
 import * as Yaml from "https://deno.land/std@0.207.0/yaml/mod.ts";
 
+const hundleSpace = {
+    refuge: (text: string) => text.replace(/　/g, "‡‡‡"),
+    restore: (text: string) => text.replace(/‡‡‡/g, "　"),
+}
+
 const renderer = new marked.Renderer();
 renderer.link = ({ href, title, text }) => {
     return `<a href="${href}" title="${title || ''}" target="_blank" rel="noopener noreferrer">${text}</a>`;
@@ -14,9 +19,10 @@ const parser = (text: string) => marked.parse(text, {
 
 export async function text2MarkdownData(text: string) {
     if (text.startsWith("---")) {
+        text = hundleSpace.refuge(text);
         const split = text.split("---");
         const yaml = split[1].trim();
-        const body = split.slice(2).join("---").trim();
+        const body = hundleSpace.restore(split.slice(2).join("---").trim());
         return {
             body,
             marked: await parser(body),
@@ -39,6 +45,7 @@ export async function text2MarkdownData(text: string) {
  * @returns 
  */
 export function extractSections(markdown: string, level: number, headingText: string): string[] {
+    markdown = hundleSpace.refuge(markdown);
     const lines = markdown.split("\n");
     const targetHeading = "#".repeat(level) + " " + headingText;
     const headingRegex = /^#{1,6}\s+(.*)$/;
@@ -79,7 +86,7 @@ export function extractSections(markdown: string, level: number, headingText: st
         sections.push(section);
     }
 
-    return sections;
+    return sections.map(section => hundleSpace.restore(section));
 }
 
 export class MarkdownParser {
