@@ -78,6 +78,21 @@ export function sortStringsBySimilarity(baseString: string, strings: string[]) {
     })).sort((a, b) => b.similarity - a.similarity);
 }
 
+/**
+ * 文字列の類似度を測定してデータを並べ替える関数
+ * @param baseString 基準となる文字列
+ * @param data 
+ * @returns 類似度順に並んだデータ
+ */
+export function getSimilarity(baseString: string, data: { id: string, text: string }[]) {
+    const baseVector = textToVector(baseString, tokenizer);
+    return data.map(d => ({
+        id: d.id,
+        text: d.text,
+        similarity: cosineSimilarity(baseVector, textToVector(d.text, tokenizer))
+    })).sort((a, b) => b.similarity - a.similarity);
+}
+
 export function createSortedStringsBySimilarity(data: { id: string, text: string }[]) {
     const vectorArray = data.map(obj => textToVector(obj.text, tokenizer));
     return data.map((obj, index) => {
