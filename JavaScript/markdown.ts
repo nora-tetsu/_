@@ -119,10 +119,17 @@ export class MarkdownParser {
     extractSections(level: number, headingText: string): string[] {
         return extractSections(this.body, level, headingText);
     }
-    /** フロントマターを置き換えて全文を取得する */
-    replaceFrontmatter(newFrontmatter: unknown) {
-        this.frontmatter = newFrontmatter;
-        const yaml = Yaml.stringify(newFrontmatter);
+    replace(newData: {
+        body?: string;
+        frontmatter?: unknown;
+    }) {
+        if (newData.body !== undefined) {
+            this.body = newData.body;
+        }
+        if (newData.frontmatter !== undefined) {
+            this.frontmatter = newData.frontmatter;
+        }
+        const yaml = Yaml.stringify(this.frontmatter);
         const body = this.body;
         this.text = `---\n${yaml}---\n${body}`;
         return this.text;
