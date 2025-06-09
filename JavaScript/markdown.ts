@@ -1,5 +1,6 @@
 import { marked } from "https://deno.land/x/marked@1.0.2/mod.ts";
 import * as Yaml from "https://deno.land/std@0.207.0/yaml/mod.ts";
+import TurndownService from "npm:turndown";
 
 const hundleSpace = {
     refuge: (text: string) => text.replace(/　/g, "‡‡‡"),
@@ -26,15 +27,27 @@ export async function text2MarkdownData(text: string) {
         return {
             body,
             marked: await parser(body),
-            frontmatter: Yaml.parse(yaml),
+            frontmatter: Yaml.parse(yaml) as Record<string, unknown>,
         }
     } else {
         return {
             body: text,
             marked: await parser(text),
-            frontmatter: null,
+            frontmatter: {},
         }
     }
+}
+
+export function html2Markdown(html: string) {
+    const turndownService = new TurndownService({
+        headingStyle: 'atx',           // 'setext' または 'atx'
+        hr: '---',                     // 水平線の記法: '---' または '***' など
+        bulletListMarker: '-',         // 箇条書きの記号: '-', '*', '+'
+        codeBlockStyle: 'fenced',      // コードブロック: 'indented' または 'fenced'
+        emDelimiter: '_',              // イタリック: '_' または '*'
+        strongDelimiter: '**',         // ボールド: '**' または '__'
+    });
+    return turndownService.turndown(html);
 }
 
 /**
@@ -93,7 +106,7 @@ export class MarkdownParser {
     text: string;
     body: string = "";
     marked: string = "";
-    frontmatter: unknown = {};
+    frontmatter: Record<string, unknown> = {};
     constructor(text: string) {
         this.text = text;
     }
@@ -121,7 +134,7 @@ export class MarkdownParser {
     }
     replace(newData: {
         body?: string;
-        frontmatter?: unknown;
+        frontmatter?: Record<string, unknown>;
     }) {
         if (newData.body !== undefined) {
             this.body = newData.body;
@@ -133,6 +146,12 @@ export class MarkdownParser {
         const body = this.body;
         this.text = `---\n${yaml}---\n${body}`;
         return this.text;
+    }
+
+    /** フロントマターと本文からデータを生成 */
+    static getText(frontmatter: Record<string, unknown>, body: string): string {
+        const yaml = Yaml.stringify(frontmatter);
+        return `---\n${yaml}---\n${body}`;
     }
 }
 
