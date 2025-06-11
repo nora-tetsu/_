@@ -87,6 +87,21 @@ declare global {
         };
         add(yearOrObject: DateData | number, month?: number, date?: number, hour?: number, minute?: number, second?: number): Date;
         subtract(yearOrObject: DateData | number, month?: number, date?: number, hour?: number, minute?: number, second?: number): Date;
+        info(): {
+            year: number;
+            month: number;
+            date: number;
+            hour: number;
+            minute: number;
+            second: number;
+            millisecond: number;
+            week: number;
+            dayOfYear: number;
+            unix: number;
+            startUnix: number;
+            endUnix: number;
+            noid: string;
+        }
     }
     interface DateConstructor {
         compare(since: Date, until: Date, unit: 'date' | 'month' | 'year' | 'hour' | 'minute'): number;
@@ -493,6 +508,28 @@ Date.prototype.getUnixTimeRange = function () {
     }
 }
 
+Date.prototype.info = function () {
+    const { YYYY, M, D, h, m, s } = this.getDataObject();
+    const unix = this.getUnixTime();
+    const startUnix = this.clearTime().getUnixTime();
+    const endUnix = startUnix + (24 * 60 * 60) - 1;
+    return {
+        year: YYYY,
+        month: M,
+        date: D,
+        hour: h,
+        minute: m,
+        second: s,
+        millisecond: this.getMilliseconds(),
+        week: this.getWeekOfYear(),
+        dayOfYear: this.getDayOfYear(),
+        unix,
+        startUnix,
+        endUnix,
+        noid: this.createNoid(),
+    }
+}
+
 Date.prototype.add = function (yearOrObject: DateData | number, month?: number, date?: number, hour?: number, minute?: number, second?: number) {
     if (typeof yearOrObject === "number") {
         const year = yearOrObject;
@@ -534,11 +571,6 @@ Date.prototype.subtract = function (yearOrObject: DateData | number, month?: num
     }
     return this;
 }
-
-/*
-        add(year: number, month?: number, date?: number, hour?: number, minute?: number, second?: number): Date;
-        subtract(year: number, month?: number, date?: number, hour?: number, minute?: number, second?: number): Date;
-*/
 
 Date.compare = function (since: Date, until?: Date, unit = 'date') {
     if (!until) until = new Date();
