@@ -2,7 +2,7 @@ import AtprotoAPI from "npm:@atproto/api";
 
 export type BskyFeedViewPost = AtprotoAPI.AppBskyFeedDefs.FeedViewPost;
 
-type SavedData = {
+export type SavedData = {
     text: string,
     createdAt: string,
     isRepost: boolean,
