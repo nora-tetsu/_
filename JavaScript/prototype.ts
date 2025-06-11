@@ -1,18 +1,13 @@
-type DateDataObjectOld = {
-    yyyy: number,
-    yy: string,
-    m: number,
-    mm: string,
-    d: number,
-    dd: string,
-    h: number,
-    hh: string,
-    n: number,
-    nn: string,
-    s: number,
-    ss: string,
-    day: number,
+type DateData = {
+    year?: number;
+    month?: number;
+    date?: number;
+    hour?: number;
+    minute?: number;
+    second?: number;
+    milliseconds?: number;
 }
+
 type DateDataObject = {
     YYYY: number,
     YY: string,
@@ -76,19 +71,22 @@ declare global {
         clearTime(): Date;
         getDayOfYear(): number;
         getWeekOfYear(): number;
-        getDataObjectOld(): DateDataObjectOld;
         getDataObject(): DateDataObject;
         createNoid(): string;
         /** 旧版 formatStringを使うこと */
         format(format: string): string;
-        /** 既定値は YYYY-MM-DDThh:mm:ss */
+        /** 既定値は YYYY-MM-DDThh:mm:ss =toFormattedString */
         formatString(format: string): string;
+        /** 既定値は YYYY-MM-DDThh:mm:ss */
+        toFormattedString(format?: string): string;
         getUnixTime(): number;
         /** 一日の最初と最後のUnix時間を取得する */
         getUnixTimeRange(): {
             since: number;
             until: number;
         };
+        add(yearOrObject: DateData | number, month?: number, date?: number, hour?: number, minute?: number, second?: number): Date;
+        subtract(yearOrObject: DateData | number, month?: number, date?: number, hour?: number, minute?: number, second?: number): Date;
     }
     interface DateConstructor {
         compare(since: Date, until: Date, unit: 'date' | 'month' | 'year' | 'hour' | 'minute'): number;
@@ -430,23 +428,6 @@ Date.prototype.getWeekOfYear = function () {
     return weeks + 1;
 };
 
-Date.prototype.getDataObjectOld = function () {
-    return {
-        yyyy: this.getFullYear(),
-        yy: this.getFullYear().toString().slice(-2),
-        m: this.getMonth() + 1,
-        mm: ('00' + (this.getMonth() + 1)).slice(-2),
-        d: this.getDate(),
-        dd: ('00' + this.getDate()).slice(-2),
-        h: this.getHours(),
-        hh: ('00' + this.getHours()).slice(-2),
-        n: this.getMinutes(),
-        nn: ('00' + this.getMinutes()).slice(-2),
-        s: this.getSeconds(),
-        ss: ('00' + this.getSeconds()).slice(-2),
-        day: this.getDay(),
-    }
-}
 Date.prototype.getDataObject = function () {
     return {
         YYYY: this.getFullYear(),
@@ -467,20 +448,20 @@ Date.prototype.getDataObject = function () {
 
 Date.prototype.createNoid = function () {
     const str = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
-    const { yy, m, d, h, n, s } = this.getDataObjectOld();
-    return str[Number(yy)] + str[m - 1] + str[d] + str[h] + str[n] + str[s] + this.getMilliseconds();
+    const { YY, M, D, h, m, s } = this.getDataObject();
+    return str[Number(YY)] + str[M - 1] + str[D] + str[h] + str[m] + str[s] + this.getMilliseconds();
 }
 
 Date.prototype.format = function (format = 'yyyy-mm-ddThh:nn') {
-    const { yyyy, yy, mm, m, dd, d, hh, h, nn, n, ss, s } = this.getDataObjectOld();
-    return format.replace('yyyy', yyyy.toString()).replace('yy', yy)
-        .replace('mm', mm).replace('m', m.toString())
-        .replace('dd', dd).replace('d', d.toString())
+    const { YYYY, YY, MM, M, DD, D, hh, h, mm, m, ss, s } = this.getDataObject();
+    return format.replace('yyyy', YYYY.toString()).replace('yy', YY)
+        .replace('mm', MM).replace('m', M.toString())
+        .replace('dd', DD).replace('d', D.toString())
         .replace('hh', hh).replace('h', h.toString())
-        .replace('nn', nn).replace('n', n.toString())
+        .replace('nn', mm).replace('n', m.toString())
         .replace('ss', ss).replace('s', s.toString())
-        .replace('年月日', `${yyyy}年${m}月${d}日`)
-        .replace('時分', `${h}時${n}分`)
+        .replace('年月日', `${YYYY}年${M}月${D}日`)
+        .replace('時分', `${h}時${m}分`)
 }
 
 
@@ -489,11 +470,15 @@ Date.prototype.formatString = function (format = 'YYYY-MM-DDThh:mm:ss') {
     return format.replace('YYYY', YYYY.toString()).replace('YY', YY)
         .replace('MM', MM).replace('M', M.toString())
         .replace('DD', DD).replace('D', D.toString())
-        .replace('hh', hh).replace('h', h.toString())
+        .replace('HH', hh).replace('hh', hh).replace('h', h.toString())
         .replace('mm', mm).replace('m', m.toString())
         .replace('ss', ss).replace('s', s.toString())
         .replace('年月日', `${YYYY}年${M}月${D}日`)
         .replace('時分', `${h}時${m}分`)
+}
+
+Date.prototype.toFormattedString = function (format = 'YYYY-MM-DDThh:mm:ss') {
+    return this.formatString(format);
 }
 
 Date.prototype.getUnixTime = function () {
@@ -507,6 +492,53 @@ Date.prototype.getUnixTimeRange = function () {
         until: date.getUnixTime() + (24 * 60 * 60) - 1,
     }
 }
+
+Date.prototype.add = function (yearOrObject: DateData | number, month?: number, date?: number, hour?: number, minute?: number, second?: number) {
+    if (typeof yearOrObject === "number") {
+        const year = yearOrObject;
+        if (year) this.setFullYear(this.getFullYear() + year);
+        if (month) this.setMonth(this.getMonth() + month);
+        if (date) this.setDate(this.getDate() + date);
+        if (hour) this.setHours(this.getHours() + hour);
+        if (minute) this.setMinutes(this.getMinutes() + minute);
+        if (second) this.setSeconds(this.getSeconds() + second);
+    } else {
+        const { year, month: m, date: d, hour: h, minute: n, second: s } = yearOrObject;
+        if (year) this.setFullYear(this.getFullYear() + year);
+        if (m) this.setMonth(this.getMonth() + m);
+        if (d) this.setDate(this.getDate() + d);
+        if (h) this.setHours(this.getHours() + h);
+        if (n) this.setMinutes(this.getMinutes() + n);
+        if (s) this.setSeconds(this.getSeconds() + s);
+    }
+    return this;
+}
+
+Date.prototype.subtract = function (yearOrObject: DateData | number, month?: number, date?: number, hour?: number, minute?: number, second?: number) {
+    if (typeof yearOrObject === "number") {
+        const year = yearOrObject;
+        if (year) this.setFullYear(this.getFullYear() - year);
+        if (month) this.setMonth(this.getMonth() - month);
+        if (date) this.setDate(this.getDate() - date);
+        if (hour) this.setHours(this.getHours() - hour);
+        if (minute) this.setMinutes(this.getMinutes() - minute);
+        if (second) this.setSeconds(this.getSeconds() - second);
+    } else {
+        const { year, month: m, date: d, hour: h, minute: n, second: s } = yearOrObject;
+        if (year) this.setFullYear(this.getFullYear() - year);
+        if (m) this.setMonth(this.getMonth() - m);
+        if (d) this.setDate(this.getDate() - d);
+        if (h) this.setHours(this.getHours() - h);
+        if (n) this.setMinutes(this.getMinutes() - n);
+        if (s) this.setSeconds(this.getSeconds() - s);
+    }
+    return this;
+}
+
+/*
+        add(year: number, month?: number, date?: number, hour?: number, minute?: number, second?: number): Date;
+        subtract(year: number, month?: number, date?: number, hour?: number, minute?: number, second?: number): Date;
+*/
 
 Date.compare = function (since: Date, until?: Date, unit = 'date') {
     if (!until) until = new Date();
