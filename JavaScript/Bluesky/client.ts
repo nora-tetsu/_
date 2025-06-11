@@ -92,18 +92,18 @@ export class Bluesky {
         return this.formatFeedData(feed);
     }
     /**
-     * 既存のデータとの差分を追加して返す
+     * 既存のデータとの差分を返す
      * @param existingFeed 
+     * @returns 既存データにないポストデータ
      */
     async getLastMyPosts(existingFeed: BskyFeedViewPost[]) {
-        const conditionFn = (feed: BskyFeedViewPost[]) => feed.some(obj => existingFeed.some(o => o.createdAt === obj.post.indexedAt));
+        const conditionFn = (feed: BskyFeedViewPost[]) => feed.some(obj => existingFeed.some(o => new Date(o.createdAt as string).getTime() === new Date(obj.post.record.createdAt).getTime()));
         const feed = await this.getAllMyPosts(conditionFn);
-        const filter = feed.filter(obj => !existingFeed.some(o => o.createdAt === obj.post.indexedAt));
+        const filter = feed.filter(obj => !existingFeed.some(o => new Date(o.createdAt as string).getTime() === new Date(obj.post.record.createdAt).getTime()));
         const records = this.formatFeedData(filter);
-        const result = [...existingFeed, ...records] as SavedData[];
-        result.sort((a, b) => {
+        records.sort((a, b) => {
             return new Date(a.createdAt) > new Date(b.createdAt) ? -1 : 1;
         })
-        return result;
+        return records;
     }
 }
