@@ -52,8 +52,8 @@ declare global {
         count(character: string): number;
     }
     interface Array<T> {
-        cycle(index: number): any;
-        getRandom(num: number): any[];
+        cycle(index: number): T;
+        getRandom(num: number): T[];
         /**
          * @param option SortOption = {
          *     key?: string;
@@ -65,12 +65,12 @@ declare global {
          */
         sortEx(option: SortOption): this;
         changeOrder(index1: number, index2: number): this;
-        search(text: string, keys?: string[], stringify?: boolean): any[];
-        removeDuplicatesAndSort(): any[];
+        search(text: string, keys?: string[], stringify?: boolean): T[];
+        removeDuplicatesAndSort(): T[];
     }
     interface ArrayConstructor {
         /** 2つの配列の共通要素を配列で返す */
-        getCommonElement(arr1: any[], arr2: any[]): any[];
+        getCommonElement<T>(arr1: T[], arr2: T[]): T[];
     }
     interface Date {
         clearTime(): Date;
@@ -320,26 +320,27 @@ Array.prototype.getRandom = function (num: number) {
 
 Array.prototype.sortEx = function (option: SortOption) {
     const { key, isAscending, isDescending, isDate, isLocale } = option;
-    const compareFanc = (function () {
+
+    this.sort((a, b) => {
         if (key) {
             if (isDate) {
-                return (a: any, b: any) => new Date(a[key]) > new Date(b[key]) ? -1 : 1;
+                return new Date(a[key]) > new Date(b[key]) ? -1 : 1;
             } else if (isLocale) {
-                return (a: any, b: any) => b[key].localeCompare(a[key], 'ja');
+                return b[key].localeCompare(a[key], 'ja');
             } else {
-                return (a: any, b: any) => a[key] > b[key] ? -1 : 1;
+                return a[key] > b[key] ? -1 : 1;
             }
         } else {
             if (isDate) {
-                return (a: any, b: any) => new Date(a) > new Date(b) ? -1 : 1;
+                return new Date(a) > new Date(b) ? -1 : 1;
             } else if (isLocale) {
-                return (a: any, b: any) => b.localeCompare(a, 'ja');
+                return b.localeCompare(a, 'ja');
             } else {
-                return (a: any, b: any) => a > b ? -1 : 1;
+                return a > b ? -1 : 1;
             }
         }
-    })();
-    this.sort(compareFanc);
+
+    });
     if (isAscending || isDescending === false) this.reverse();
 
     return this;
@@ -404,7 +405,7 @@ Array.prototype.removeDuplicatesAndSort = function () {
         .map(key => key);
 }
 
-Array.getCommonElement = function (arr1: any[], arr2: any[]) {
+Array.getCommonElement = function (arr1, arr2) {
     const filter = [...arr1, ...arr2].filter(item => arr1.includes(item) && arr2.includes(item));
     return Array.from(new Set(filter));
 }
