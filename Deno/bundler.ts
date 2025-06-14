@@ -9,7 +9,7 @@ import { denoPlugins } from "jsr:@luca/esbuild-deno-loader@0.11";
  */
 export async function bundle(entryPoint: string, outfile: string) {
     const result = await esbuild.build({
-        plugins: [...denoPlugins()],
+        plugins: [...denoPlugins({ loader: "native" })],
         entryPoints: [entryPoint],
         outfile: outfile,
         bundle: true,
