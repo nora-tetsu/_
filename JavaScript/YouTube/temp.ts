@@ -104,7 +104,7 @@ export class YouTubeURL {
         const item = snippet;// data.items[0].snippet;
         const thumnails = item.thumbnails;
         const thumnail = thumnails.maxres || thumnails.high || thumnails.standard || thumnails.medium || thumnails.default;
-        return thumnail.url;
+        return thumnail ? thumnail.url : "";
     }
 }
 
@@ -205,6 +205,7 @@ export class YouTubeClient {
 
         return results;
     }
+    getPlaylistItems = this.getChannelVideos;
     /**
      * 検索語でヒットするトップのアカウントの投稿動画情報を取得する
      * @param query 検索語
