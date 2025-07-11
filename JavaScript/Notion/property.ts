@@ -1,3 +1,5 @@
+type Language = "abap" | "arduino" | "bash" | "basic" | "c" | "clojure" | "coffeescript" | "c++" | "c#" | "css" | "dart" | "diff" | "docker" | "elixir" | "elm" | "erlang" | "flow" | "fortran" | "f#" | "gherkin" | "glsl" | "go" | "graphql" | "groovy" | "haskell" | "html" | "java" | "javascript" | "json" | "julia" | "kotlin" | "latex" | "less" | "lisp" | "livescript" | "lua" | "makefile" | "markdown" | "markup" | "matlab" | "mermaid" | "nix" | "objective|c" | "ocaml" | "pascal" | "perl" | "php" | "plain text" | "powershell" | "prolog" | "protobuf" | "python" | "r" | "reason" | "ruby" | "rust" | "sass" | "scala" | "scheme" | "scss" | "shell" | "sql" | "swift" | "typescript" | "vb.net" | "verilog" | "vhdl" | "visual basic" | "webassembly" | "xml" | "yaml" | "java/c/c++/c#";
+
 export const NotionProps = {
     page: {
         parent(type: "page" | "database", parent_id: string) {
@@ -198,5 +200,25 @@ export const NotionProps = {
                 children: children ? children : [],
             }
         },
+        code(text: string, language: Language = "plain text", caption?: string) {
+            return {
+                "type": "code",
+                "code": {
+                    "caption": caption ? [{
+                        "type": "text",
+                        "text": {
+                            "content": caption
+                        }
+                    }] : [],
+                    "rich_text": [{
+                        "type": "text",
+                        "text": {
+                            "content": text
+                        }
+                    }],
+                    "language": language
+                }
+            }
+        }
     },
 }
