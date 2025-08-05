@@ -184,7 +184,7 @@ export class YouTubeClient {
         }>);
     }
     /** `https://www.googleapis.com/youtube/v3/playlistItems` */
-    async getChannelVideos(playlistId: string) {
+    async getChannelVideos(playlistId: string, limit?: number) {
         let results: YouTubeItem[] = [];
         let hasMore = true;
         let cursor: string | null | undefined = undefined;
@@ -201,6 +201,7 @@ export class YouTubeClient {
             results = results.concat(response.items);
             cursor = response.nextPageToken;
             hasMore = Boolean(response.nextPageToken);
+            if(limit && results.length > (limit - 1)) break;
         }
 
         return results;
@@ -210,7 +211,7 @@ export class YouTubeClient {
      * 検索語でヒットするトップのアカウントの投稿動画情報を取得する
      * @param query 検索語
      */
-    async test_getVideosByQuery(query: string) {
+    async test_getVideosByQuery(query: string, limit?: number) {
         const search = await this.searchChannel(query);
         const map = search.items.map((item) => {
             return {
@@ -224,7 +225,7 @@ export class YouTubeClient {
         if (retrieve.items.length == 0) return;
         const playlistId = retrieve.items[0].contentDetails.relatedPlaylists.uploads;
         console.log(playlistId);
-        const result = await this.getChannelVideos(playlistId);
+        const result = await this.getChannelVideos(playlistId, limit);
         return {
             title: map[0].title,
             channel: retrieve.items[0],
