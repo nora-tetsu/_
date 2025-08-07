@@ -2,9 +2,10 @@ import { marked } from "https://deno.land/x/marked@1.0.2/mod.ts";
 import * as Yaml from "https://deno.land/std@0.207.0/yaml/mod.ts";
 import TurndownService from "npm:turndown";
 
+/** trim時に行頭字下げなどの全角スペースが除去されるのを防ぐ */
 const hundleSpace = {
     refuge: (text: string) => text.replace(/　/g, "‡‡‡"),
-    restore: (text: string) => text.replace(/‡‡‡/g, "　"),
+    restore: (text: string) => text.replace(/‡{3,}/g, "　"),
 }
 
 const renderer = new marked.Renderer();
@@ -20,13 +21,12 @@ const parser = (text: string) => marked.parse(text, {
 
 export async function text2MarkdownData(text: string) {
     if (text.startsWith("---")) {
-        text = hundleSpace.refuge(text);
         const split = text.split("---");
         const yaml = split[1].trim();
-        const body = hundleSpace.restore(split.slice(2).join("---").trim());
+        const body = split.slice(2).join("---");
         return {
             body,
-            marked: await parser(body),
+            marked: hundleSpace.restore(await parser(hundleSpace.refuge(body))),
             frontmatter: Yaml.parse(yaml) as Record<string, unknown>,
         }
     } else {
