@@ -23,6 +23,10 @@ type YouTubeSnippet = {
         description: string;
     },
     defaultAudioLanguage: string;
+    resourceId?: {
+        kind: string;
+        videoId: string;
+    }
 }
 
 type YouTubeItem = {
@@ -238,7 +242,27 @@ export class YouTubeClient {
 
         return results;
     }
-    getPlaylistItems = this.getChannelVideos;
+
+    /**
+     * 再生リストに含まれる動画について、動画自体の情報を取得する
+     * @param playlistId 
+     * @param limit 
+     * @returns 
+     */
+    async getPlaylistItems(playlistId: string, limit?: number) {
+        const data = await this.getChannelVideos(playlistId, limit);
+        const videos: YouTubeItem[] = [];
+        for (const item of data) {
+            const id = item.snippet.resourceId?.videoId;
+            if (!id) continue;
+            const parser = new YouTubeURL(`https://www.youtube.com/watch?v=${id}`);
+            const video = await parser.data(this.key);
+            const result = video.items[0];
+            if (result && result.id) videos.push(video.items[0]);
+        }
+        return videos;
+    }
+
     /**
      * 検索語でヒットするトップのアカウントの投稿動画情報を取得する
      * @param query 検索語
