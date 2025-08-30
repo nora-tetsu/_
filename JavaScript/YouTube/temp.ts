@@ -65,6 +65,15 @@ type YouTubeData = {
     }
 }
 
+const ENDPOINT = {
+    videos: "https://www.googleapis.com/youtube/v3/videos",
+    search: "https://www.googleapis.com/youtube/v3/search",
+    channels: "https://www.googleapis.com/youtube/v3/channels",
+    playlistItems: "https://www.googleapis.com/youtube/v3/playlistItems",
+}
+
+const generateApiUrl = (endpoint: string, params: Record<string, string>) => endpoint + "?" + new URLSearchParams(params).toString();
+
 export class YouTubeURL {
     id: string;
     type: string;
@@ -96,8 +105,11 @@ export class YouTubeURL {
     }
     /** `https://www.googleapis.com/youtube/v3/videos` */
     data(api: string) {
-        // https://www.googleapis.com/youtube/v3/videos?id=動画のID&key=APIキー&part=snippet,contentDetails,statistics,status    
-        const url = `https://www.googleapis.com/youtube/v3/videos?id=${this.id}&key=${api}&part=snippet,contentDetails,statistics,status`;
+        const url = generateApiUrl(ENDPOINT.videos, {
+            id: this.id, // 動画のID
+            key: api, // APIキー
+            part: "snippet,contentDetails,statistics,status",
+        })
         return fetch(url).then(response => response.json()) as Promise<YouTubeData>;
     }
     static getThumnail(snippet: YouTubeSnippet) {
@@ -115,7 +127,12 @@ export class YouTubeClient {
     }
     /** `https://www.googleapis.com/youtube/v3/search` */
     searchChannel(query: string) {
-        const url = `https://www.googleapis.com/youtube/v3/search?q=${query}&key=${this.key}&type=channel&part=snippet`;
+        const url = generateApiUrl(ENDPOINT.search, {
+            q: query,
+            key: this.key,
+            type: "channel",
+            part: "snippet",
+        })
         return fetch(url).then(response => response.json() as Promise<
             {
                 kind: string,
@@ -145,7 +162,11 @@ export class YouTubeClient {
     }
     /** `https://www.googleapis.com/youtube/v3/channels` */
     retrieveChannel(channelId: string) {
-        const url = `https://www.googleapis.com/youtube/v3/channels?id=${channelId}&key=${this.key}&part=snippet,contentDetails,statistics,status`;
+        const url = generateApiUrl(ENDPOINT.channels, {
+            id: channelId,
+            key: this.key,
+            part: "snippet,contentDetails,statistics,status",
+        })
         return fetch(url).then(response => response.json() as Promise<{
             kind: string;
             etag: string;
@@ -192,16 +213,27 @@ export class YouTubeClient {
 
         while (hasMore) {
             if (!results.length) {
-                url = `https://www.googleapis.com/youtube/v3/playlistItems?playlistId=${playlistId}&key=${this.key}&part=snippet&maxResults=50`;
+                url = generateApiUrl(ENDPOINT.playlistItems, {
+                    playlistId,
+                    key: this.key,
+                    part: "snippet",
+                    maxResults: "50",
+                })
             } else {
-                url = `https://www.googleapis.com/youtube/v3/playlistItems?playlistId=${playlistId}&pageToken=${cursor}&key=${this.key}&part=snippet&maxResults=50`;
+                url = generateApiUrl(ENDPOINT.playlistItems, {
+                    playlistId,
+                    pageToken: cursor,
+                    key: this.key,
+                    part: "snippet",
+                    maxResults: "50",
+                })
             }
             const response = await fetch(url).then(response => response.json()) as YouTubeData & { nextPageToken: string };
 
             results = results.concat(response.items);
             cursor = response.nextPageToken;
             hasMore = Boolean(response.nextPageToken);
-            if(limit && results.length > (limit - 1)) break;
+            if (limit && results.length > (limit - 1)) break;
         }
 
         return results;
