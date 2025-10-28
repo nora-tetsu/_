@@ -163,7 +163,7 @@ function convertToText(master: DataType[]) {
 
 // 2025/02/23
 type Data = {
-    id: number
+    id: number;
     title: string;
     body: string;
     children: number[];
