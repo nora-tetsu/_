@@ -1,73 +1,5 @@
 //import { YouTube } from 'https://deno.land/x/youtube@v0.3.0/mod.ts';
-
-type YouTubeThumnail = {
-    default: { url: string, width: number, height: number },
-    medium?: { url: string, width: number, height: number },
-    high?: { url: string, width: number, height: number },
-    standard?: { url: string, width: number, height: number },
-    maxres?: { url: string, width: number, height: number },
-}
-
-type YouTubeSnippet = {
-    publishedAt: string;
-    channelId: string;
-    title: string;
-    description: string;
-    thumbnails: YouTubeThumnail;
-    channelTitle: string;
-    tags: string[];
-    categoryId: string;
-    liveBroadcastContent: string;
-    localized: {
-        title: string;
-        description: string;
-    },
-    defaultAudioLanguage: string;
-    resourceId?: {
-        kind: string;
-        videoId: string;
-    }
-}
-
-type YouTubeItem = {
-    kind: string;
-    etag: string;
-    id: string;
-    snippet: YouTubeSnippet,
-    contentDetails: {
-        duration: string;
-        dimension: string;
-        definition: string;
-        caption: string;
-        licensedContent: boolean;
-        contentRating: unknown;
-        projection: string;
-    },
-    status: {
-        uploadStatus: string;
-        privacyStatus: string;
-        license: string;
-        embeddable: boolean;
-        publicStatsViewable: boolean;
-        madeForKids: boolean;
-    },
-    statistics: {
-        viewCount: string;
-        likeCount: string;
-        favoriteCount: string;
-        commentCount: string;
-    }
-}
-
-type YouTubeData = {
-    kind: string;
-    etag: string;
-    items: YouTubeItem[];
-    pageInfo: {
-        totalResults: number;
-        resultsPerPage: number;
-    }
-}
+import type { VideoItem, PlaylistItemsResponse, SearchResponse, ChannelsResponse } from "./type.ts";
 
 const ENDPOINT = {
     videos: "https://www.googleapis.com/youtube/v3/videos",
@@ -114,10 +46,10 @@ export class YouTubeURL {
             key: api, // APIキー
             part: "snippet,contentDetails,statistics,status",
         })
-        return fetch(url).then(response => response.json()) as Promise<YouTubeData>;
+        return fetch(url).then(response => response.json()) as Promise<PlaylistItemsResponse>;
     }
-    static getThumnail(snippet: YouTubeSnippet) {
-        const item = snippet;// data.items[0].snippet;
+    static getThumnail(video: VideoItem) {
+        const item = video.snippet;
         const thumnails = item.thumbnails;
         const thumnail = thumnails.maxres || thumnails.high || thumnails.standard || thumnails.medium || thumnails.default;
         return thumnail ? thumnail.url : "";
@@ -137,32 +69,7 @@ export class YouTubeClient {
             type: "channel",
             part: "snippet",
         })
-        return fetch(url).then(response => response.json() as Promise<
-            {
-                kind: string,
-                etag: string,
-                nextPageToken: string,
-                regionCode: string,
-                pageInfo: { totalResults: number, resultsPerPage: number },
-                items: {
-                    kind: string,
-                    etag: string,
-                    id: {
-                        kind: string,
-                        channelId: string
-                    },
-                    snippet: {
-                        publishedAt: string,
-                        channelId: string,
-                        title: string,
-                        description: string,
-                        thumbnails: YouTubeThumnail,
-                        channelTitle: string,
-                        liveBroadcastContent: string,
-                        publishTime: string
-                    }
-                }[]
-            }>);
+        return fetch(url).then(response => response.json() as Promise<SearchResponse>);
     }
     /** `https://www.googleapis.com/youtube/v3/channels` */
     retrieveChannel(channelId: string) {
@@ -171,46 +78,11 @@ export class YouTubeClient {
             key: this.key,
             part: "snippet,contentDetails,statistics,status",
         })
-        return fetch(url).then(response => response.json() as Promise<{
-            kind: string;
-            etag: string;
-            pageInfo: { totalResults: number, resultsPerPage: number },
-            items: {
-                kind: string,
-                etag: string,
-                id: string,
-                snippet: {
-                    title: string,
-                    description: string,
-                    customUrl: string,
-                    publishedAt: string,
-                    thumbnails: YouTubeThumnail,
-                    localized: {
-                        title: string,
-                        description: string
-                    },
-                    country: string
-                },
-                contentDetails: {
-                    relatedPlaylists: { likes: string, uploads: string }
-                },
-                statistics: {
-                    viewCount: string,
-                    subscriberCount: string,
-                    hiddenSubscriberCount: boolean,
-                    videoCount: string
-                },
-                status: {
-                    privacyStatus: string,
-                    isLinked: boolean,
-                    longUploadsStatus: string
-                }
-            }[]
-        }>);
+        return fetch(url).then(response => response.json() as Promise<ChannelsResponse>);
     }
     /** `https://www.googleapis.com/youtube/v3/playlistItems` */
     async getChannelVideos(playlistId: string, limit?: number) {
-        let results: YouTubeItem[] = [];
+        let results: VideoItem[] = [];
         let hasMore = true;
         let cursor: string | null | undefined = undefined;
         let url: string;
@@ -226,13 +98,13 @@ export class YouTubeClient {
             } else {
                 url = generateApiUrl(ENDPOINT.playlistItems, {
                     playlistId,
-                    pageToken: cursor,
+                    pageToken: cursor!,
                     key: this.key,
                     part: "snippet",
                     maxResults: "50",
                 })
             }
-            const response = await fetch(url).then(response => response.json()) as YouTubeData & { nextPageToken: string };
+            const response = await fetch(url).then(response => response.json()) as PlaylistItemsResponse;
 
             results = results.concat(response.items);
             cursor = response.nextPageToken;
@@ -251,7 +123,7 @@ export class YouTubeClient {
      */
     async getPlaylistItems(playlistId: string, limit?: number) {
         const data = await this.getChannelVideos(playlistId, limit);
-        const videos: YouTubeItem[] = [];
+        const videos: VideoItem[] = [];
         for (const item of data) {
             const id = item.snippet.resourceId?.videoId;
             if (!id) continue;
