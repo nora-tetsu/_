@@ -1,4 +1,4 @@
-export {} from "./prototype.ts";
-export * from "./N-gram.ts";
-export * from "./kuromoji.ts";
+export {} from "./native-extensions.ts";
+export * from "./Misc/N-gram.ts";
+export * from "./Misc/kuromoji.ts";
 export * from "./util.ts";

@@ -1,5 +1,5 @@
-import { OpmlParser, type DataType } from "../JavaScript/opml.ts";
-import { hierarchicalTextToOpml, hierarchicalTextToOutlines } from "../JavaScript/hierarchicalText.ts";
+import { OpmlParser, type DataType } from "../JavaScript/WebAPI/opml.ts";
+import { hierarchicalTextToOpml, hierarchicalTextToOutlines } from "../JavaScript/Misc/hierarchicalText.ts";
 import { scrapboxJson2Opml, type ScrapboxJson } from "../JavaScript/Scrapbox.ts";
 
 export function simpleJsonToOpml(jsonPath: string, outputPath: string, title: string) {

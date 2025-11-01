@@ -1,4 +1,4 @@
-import "../../../JavaScript/prototype.ts";
+import "../../../JavaScript/native-extensions.ts";
 import { Ref, useEffect, useRef, marked } from "../deps.ts";
 //import DOMPurify from "dompurify";
 //import { default as sanitizeHtml } from "sanitize-html";

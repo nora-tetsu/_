@@ -1,4 +1,4 @@
-import { OpmlParser } from "./opml.ts";
+import { OpmlParser } from "./WebAPI/opml.ts";
 
 type User = {
     id: string;
