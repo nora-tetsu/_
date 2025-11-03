@@ -8,7 +8,7 @@ type DateData = {
     milliseconds?: number;
 }
 
-type DateDataObject = {
+type DateFormatStringObject = {
     YYYY: number,
     YY: string,
     M: number,
@@ -34,10 +34,6 @@ type SortOption = {
 
 declare global {
     interface String {
-        toClipboard(needsAlert?: boolean): this;
-        convertLinkToHTML(): string;
-        convertScrapboxToMarkdown(): string;
-        convertMarkdownToScrapbox(): string;
         searchEx(searchWords: string): boolean;
         removeComment(type?: string[]): string;
         replaceInvalidFilenameCharacters(): string;
@@ -71,12 +67,7 @@ declare global {
         clearTime(): Date;
         getDayOfYear(): number;
         getWeekOfYear(): number;
-        getDataObject(): DateDataObject;
-        createNoid(): string;
-        /** 旧版 formatStringを使うこと */
-        format(format: string): string;
-        /** 既定値は YYYY-MM-DDThh:mm:ss =toFormattedString */
-        formatString(format: string): string;
+        getFormattedValue(): DateFormatStringObject;
         /** 既定値は YYYY-MM-DDThh:mm:ss */
         toFormattedString(format?: string): string;
         getUnixTime(): number;
@@ -87,21 +78,6 @@ declare global {
         };
         add(yearOrObject: DateData | number, month?: number, date?: number, hour?: number, minute?: number, second?: number): Date;
         subtract(yearOrObject: DateData | number, month?: number, date?: number, hour?: number, minute?: number, second?: number): Date;
-        info(): {
-            year: number;
-            month: number;
-            date: number;
-            hour: number;
-            minute: number;
-            second: number;
-            millisecond: number;
-            week: number;
-            dayOfYear: number;
-            unix: number;
-            startUnix: number;
-            endUnix: number;
-            noid: string;
-        }
     }
     interface DateConstructor {
         compare(since: Date, until: Date, unit: 'date' | 'month' | 'year' | 'hour' | 'minute'): number;
@@ -110,131 +86,6 @@ declare global {
     interface Math {
         randomInteger(min: number, max: number): number;
     }
-}
-
-String.prototype.toClipboard = function (needsAlert = false) {
-    const txt = this.toString();
-    navigator.clipboard.writeText(txt)
-        .then(() => {
-            const display = (num: number) => txt.length < num ? txt : txt.slice(0, num) + '…';
-            console.group('Copied to clipboard');
-            console.log(display(100));
-            console.groupEnd();
-            if (needsAlert) alert(`クリップボードにコピーしました。\n\n${display(30)}`);
-        })
-        .catch(err => {
-            console.log('Something went wrong', err);
-            if (needsAlert) alert('コピーできませんでした。');
-        })
-    return this;
-}
-
-String.prototype.convertLinkToHTML = function () {
-    let text = this.toString();
-    const arr: { regexp: RegExp, func: (...params: string[]) => string }[] = [
-        { // [title](url) → aタグ
-            regexp: /\[([^\]]+)\]\(((h?)(ttps?:\/\/[a-zA-Z0-9.\-_@:/~?%&;=+#',()*!]+))\)/g,
-            func(_match, title, url, _h, _href) { return `<a href="${url}" target="_blank" rel="noopener noreferrer">${title}</a>` },
-        },
-        { // [title url] → aタグ
-            regexp: /\[([^\]]+) ((h?)(ttps?:\/\/[a-zA-Z0-9.\-_@:/~?%&;=+#',()*!]+))\]/g,
-            func(_match, title, url, _h, _href) { return `<a href="${url}" target="_blank" rel="noopener noreferrer">${title}</a>` },
-        },
-        { // [url title] → aタグ
-            regexp: /\[((h?)(ttps?:\/\/[a-zA-Z0-9.\-_@:/~?%&;=+#',()*!]+)) ([^\]]+)\]/g,
-            func(_match, url, _h, _href, title) { return `<a href="${url}" target="_blank" rel="noopener noreferrer">${title}</a>` },
-        },
-        { // [gyazo] → imgタグ
-            regexp: /\[((h?)(ttps?:\/\/gyazo.com\/[a-zA-Z0-9.\-_@:/~?%&;=+#',()*!]+))\]/g,
-            func(_match, url, _h, _href) { return `<img src="${url}/raw">` },
-        },
-        { // [url] → imgタグ
-            regexp: /\[((h?)(ttps?:\/\/[a-zA-Z0-9.\-_@:/~?%&;=+#',()*!]+))\]/g,
-            func(_match, url, _h, _href) { return `<img src="${url}">` },
-        },
-    ]
-    for (const obj of arr) {
-        text = text.replace(obj.regexp, obj.func);
-    }
-    return text;
-}
-
-String.prototype.convertScrapboxToMarkdown = function () {
-    let text = this.replace(/\[/g, '[[').replace(/\]/g, ']]'); // []だと処理済みリンクと区別できなくなるため
-    const arr: { regexp: RegExp, func: (...params: string[]) => string }[] = [
-        { // [[title url]]になっているリンクを修正する
-            regexp: /\[\[([^\]]+) ((h?)(ttps?:\/\/[a-zA-Z0-9.\-_@:/~?%&;=+#',()*!]+))\]\]/g,
-            func(_match, title, url, _h, _href) { return `[${title}](${url})` },
-        },
-        { //[[url title]]
-            regexp: /\[\[((h?)(ttps?:\/\/[a-zA-Z0-9.\-_@:/~?%&;=+#',()*!]+)) ([^\]]+)\]\]/g,
-            func(_match, url, _h, _href, title) { return `[${title}](${url})` },
-        },
-        { // gyazo
-            regexp: /\[\[((h?)(ttps?:\/\/gyazo.com\/[a-zA-Z0-9.\-_@:/~?%&;=+#',()*!]+))\]\]/g,
-            func(_match, url, _h, _href) { return `![](${url}/raw)` },
-        },
-        { // ハッシュタグ
-            regexp: /(^|\s)#([^\s$]+)(\s|$)/g,
-            func(_match, _head, tag, _foot) { return ` [[${tag}]] ` },
-        },
-        { // 他プロジェクトへのページリンク
-            regexp: /\[\[\/([^\]]+)\]\]/g,
-            func(_match, link) { return `▶${link}` },
-        },
-        { // 太字のみ
-            regexp: /\[\[(\*+)\s(\S+)\]\]/g,
-            func(_match, strong, text) { return `<b data-bold="${strong.length}">${text}</b>` }
-        },
-        { // 太字以外を含む文字修飾
-            regexp: /\[\[([!"#%&'()*+,-./{|}<>_~]+)\s(\S+)\]\]/g,
-            func(_match, deco, text) { return `<span data-deco="${deco}">${text}</span>` }
-        },
-        { // ![]()にダブルブラケット
-            regexp: /\[\[(!\[\S*\([^)]*\))\]\]/g,
-            func(_match, link) { return link }
-        },
-        { //[[画像url]]→![]()
-            regexp: /\[\[((h?)(ttps?:\/\/[a-zA-Z0-9.\-_@:/~?%&;=+#',()*!]+))(\.(jpg|jpeg|png|bmp|gif|JPG|JPEG))\]\]/g,
-            func(_match, url, _h, _href, ex) { return `![](${url}${ex})` },
-        },
-        { //[[https://www.youtube.com/~]]→ブラケットを外す
-            regexp: /\[\[((h?)(ttps?:\/\/www\.youtube\.com\/[a-zA-Z0-9.\-_@:/~?%&;=+#',()*!]+))\]\]/g,
-            func(_match, url, _h, _href) { return url },
-        },
-    ]
-    for (const obj of arr) {
-        text = text.replace(obj.regexp, obj.func);
-    }
-    return text;
-}
-
-String.prototype.convertMarkdownToScrapbox = function () {
-    let text = this.toString();
-    text = text.replace(
-        /!\[([^\]]+)\]\(((h?)(ttps?:\/\/[a-zA-Z0-9.\-_@:/~?%&;=+#',()*!]+))\)/g,
-        (_match, _title, url, _h, _href) => `[[${url}]]`
-    ).replace(
-        /\[([^\]]+)\]\(((h?)(ttps?:\/\/[a-zA-Z0-9.\-_@:/~?%&;=+#',()*!]+))\)/g,
-        (_match, title, url, _h, _href) => `[${title} ${url}]`
-    ).replace(
-        /\[\[(.+?)\]\]/g,
-        (_match, title) => `[${title}]`
-    ).replace(
-        /\t*\|/g,
-        '\t'
-    ).replace(
-        /^#+ (.*)/g,
-        (_match, title) => `[** ${title}]`
-    ).replace(
-        /^( *)- /g,
-        (_match, space) => `${'\t'.repeat(space.count(' ') / 2 + 1)}`
-    ).replace(
-        /(( |　|\t)+)$/,
-        ''
-    )
-
-    return text;
 }
 
 String.prototype.searchEx = function (searchWords: string) {
@@ -443,7 +294,7 @@ Date.prototype.getWeekOfYear = function () {
     return weeks + 1;
 };
 
-Date.prototype.getDataObject = function () {
+Date.prototype.getFormattedValue = function () {
     return {
         YYYY: this.getFullYear(),
         YY: this.getFullYear().toString().slice(-2),
@@ -461,27 +312,8 @@ Date.prototype.getDataObject = function () {
     }
 }
 
-Date.prototype.createNoid = function () {
-    const str = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
-    const { YY, M, D, h, m, s } = this.getDataObject();
-    return str[Number(YY)] + str[M - 1] + str[D] + str[h] + str[m] + str[s] + this.getMilliseconds();
-}
-
-Date.prototype.format = function (format = 'yyyy-mm-ddThh:nn') {
-    const { YYYY, YY, MM, M, DD, D, hh, h, mm, m, ss, s } = this.getDataObject();
-    return format.replace('yyyy', YYYY.toString()).replace('yy', YY)
-        .replace('mm', MM).replace('m', M.toString())
-        .replace('dd', DD).replace('d', D.toString())
-        .replace('hh', hh).replace('h', h.toString())
-        .replace('nn', mm).replace('n', m.toString())
-        .replace('ss', ss).replace('s', s.toString())
-        .replace('年月日', `${YYYY}年${M}月${D}日`)
-        .replace('時分', `${h}時${m}分`)
-}
-
-
-Date.prototype.formatString = function (format = 'YYYY-MM-DDThh:mm:ss') {
-    const { YYYY, YY, MM, M, DD, D, hh, h, mm, m, ss, s } = this.getDataObject();
+Date.prototype.toFormattedString = function (format = 'YYYY-MM-DDThh:mm:ss') {
+    const { YYYY, YY, MM, M, DD, D, hh, h, mm, m, ss, s } = this.getFormattedValue();
     return format.replace('YYYY', YYYY.toString()).replace('YY', YY)
         .replace('MM', MM).replace('M', M.toString())
         .replace('DD', DD).replace('D', D.toString())
@@ -490,10 +322,6 @@ Date.prototype.formatString = function (format = 'YYYY-MM-DDThh:mm:ss') {
         .replace('ss', ss).replace('s', s.toString())
         .replace('年月日', `${YYYY}年${M}月${D}日`)
         .replace('時分', `${h}時${m}分`)
-}
-
-Date.prototype.toFormattedString = function (format = 'YYYY-MM-DDThh:mm:ss') {
-    return this.formatString(format);
 }
 
 Date.prototype.getUnixTime = function () {
@@ -505,28 +333,6 @@ Date.prototype.getUnixTimeRange = function () {
     return {
         since: date.getUnixTime(),
         until: date.getUnixTime() + (24 * 60 * 60) - 1,
-    }
-}
-
-Date.prototype.info = function () {
-    const { YYYY, M, D, h, m, s } = this.getDataObject();
-    const unix = this.getUnixTime();
-    const startUnix = this.clearTime().getUnixTime();
-    const endUnix = startUnix + (24 * 60 * 60) - 1;
-    return {
-        year: YYYY,
-        month: M,
-        date: D,
-        hour: h,
-        minute: m,
-        second: s,
-        millisecond: this.getMilliseconds(),
-        week: this.getWeekOfYear(),
-        dayOfYear: this.getDayOfYear(),
-        unix,
-        startUnix,
-        endUnix,
-        noid: this.createNoid(),
     }
 }
 
