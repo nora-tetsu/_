@@ -153,3 +153,137 @@ export function analyzePath(path: string) {
         name: match ? match[2] : "", // path.split("/").slice(-2)[0]
     }
 }
+
+
+export function formatLinktext(text: string, type: "cosense2html" | "cosense2markdown" | "markdown2cosense") {
+    let result = "";
+
+    const regText = {
+        url: "h?ttps?:\/\/[a-zA-Z0-9.\-_@:/~?%&;=+#',()*!]+",
+        gyazo: "h?ttps?:\/\/gyazo.com\/[a-zA-Z0-9.\-_@:/~?%&;=+#',()*!]+",
+        img: "h?ttps?:\/\/[a-zA-Z0-9.\-_@:/~?%&;=+#',()*!]+\.(?:jpg|jpeg|png|bmp|gif|JPG|JPEG)",
+        youtube: "h?ttps?:\/\/www\.youtube\.com\/[a-zA-Z0-9.\-_@:/~?%&;=+#',()*!]+",
+    }
+
+    switch (type) {
+        case "cosense2html":
+            result = convertLinkToHTML(text);
+            break;
+        case "cosense2markdown":
+            result = convertScrapboxToMarkdown(text);
+            break;
+        case "markdown2cosense":
+            result = convertMarkdownToScrapbox(text);
+            break;
+        default:
+            break;
+    }
+
+    return result;
+
+    function convertLinkToHTML(text: string) {
+        const arr: { regexp: RegExp, func: (...params: string[]) => string }[] = [
+            { // [title](url) → aタグ
+                regexp: /\[([^\]]+)\]\(((h?)(ttps?:\/\/[a-zA-Z0-9.\-_@:/~?%&;=+#',()*!]+))\)/g,
+                func(_match, title, url, _h, _href) { return `<a href="${url}" target="_blank" rel="noopener noreferrer">${title}</a>` },
+            },
+            { // [title url] → aタグ
+                regexp: /\[([^\]]+) ((h?)(ttps?:\/\/[a-zA-Z0-9.\-_@:/~?%&;=+#',()*!]+))\]/g,
+                func(_match, title, url, _h, _href) { return `<a href="${url}" target="_blank" rel="noopener noreferrer">${title}</a>` },
+            },
+            { // [url title] → aタグ
+                regexp: /\[((h?)(ttps?:\/\/[a-zA-Z0-9.\-_@:/~?%&;=+#',()*!]+)) ([^\]]+)\]/g,
+                func(_match, url, _h, _href, title) { return `<a href="${url}" target="_blank" rel="noopener noreferrer">${title}</a>` },
+            },
+            { // [gyazo] → imgタグ
+                regexp: /\[((h?)(ttps?:\/\/gyazo.com\/[a-zA-Z0-9.\-_@:/~?%&;=+#',()*!]+))\]/g,
+                func(_match, url, _h, _href) { return `<img src="${url}/raw">` },
+            },
+            { // [url] → imgタグ
+                regexp: /\[((h?)(ttps?:\/\/[a-zA-Z0-9.\-_@:/~?%&;=+#',()*!]+))\]/g,
+                func(_match, url, _h, _href) { return `<img src="${url}">` },
+            },
+        ]
+        for (const obj of arr) {
+            text = text.replace(obj.regexp, obj.func);
+        }
+        return text;
+    }
+
+    function convertScrapboxToMarkdown(text: string) {
+        text = text.replace(/\[/g, '[[').replace(/\]/g, ']]'); // []だと処理済みリンクと区別できなくなるため
+        const arr: { regexp: RegExp, func: (...params: string[]) => string }[] = [
+            { // [[title url]]になっているリンクを修正する
+                regexp: /\[\[([^\]]+) ((h?)(ttps?:\/\/[a-zA-Z0-9.\-_@:/~?%&;=+#',()*!]+))\]\]/g,
+                func(_match, title, url, _h, _href) { return `[${title}](${url})` },
+            },
+            { //[[url title]]
+                regexp: /\[\[((h?)(ttps?:\/\/[a-zA-Z0-9.\-_@:/~?%&;=+#',()*!]+)) ([^\]]+)\]\]/g,
+                func(_match, url, _h, _href, title) { return `[${title}](${url})` },
+            },
+            { // gyazo
+                regexp: /\[\[((h?)(ttps?:\/\/gyazo.com\/[a-zA-Z0-9.\-_@:/~?%&;=+#',()*!]+))\]\]/g,
+                func(_match, url, _h, _href) { return `![](${url}/raw)` },
+            },
+            { // ハッシュタグ
+                regexp: /(^|\s)#([^\s$]+)(\s|$)/g,
+                func(_match, _head, tag, _foot) { return ` [[${tag}]] ` },
+            },
+            { // 他プロジェクトへのページリンク
+                regexp: /\[\[\/([^\]]+)\]\]/g,
+                func(_match, link) { return `▶${link}` },
+            },
+            { // 太字のみ
+                regexp: /\[\[(\*+)\s(\S+)\]\]/g,
+                func(_match, strong, text) { return `<b data-bold="${strong.length}">${text}</b>` }
+            },
+            { // 太字以外を含む文字修飾
+                regexp: /\[\[([!"#%&'()*+,-./{|}<>_~]+)\s(\S+)\]\]/g,
+                func(_match, deco, text) { return `<span data-deco="${deco}">${text}</span>` }
+            },
+            { // ![]()にダブルブラケット
+                regexp: /\[\[(!\[\S*\([^)]*\))\]\]/g,
+                func(_match, link) { return link }
+            },
+            { //[[画像url]]→![]()
+                regexp: /\[\[((h?)(ttps?:\/\/[a-zA-Z0-9.\-_@:/~?%&;=+#',()*!]+))(\.(jpg|jpeg|png|bmp|gif|JPG|JPEG))\]\]/g,
+                func(_match, url, _h, _href, ex) { return `![](${url}${ex})` },
+            },
+            { //[[https://www.youtube.com/~]]→ブラケットを外す
+                regexp: /\[\[((h?)(ttps?:\/\/www\.youtube\.com\/[a-zA-Z0-9.\-_@:/~?%&;=+#',()*!]+))\]\]/g,
+                func(_match, url, _h, _href) { return url },
+            },
+        ]
+        for (const obj of arr) {
+            text = text.replace(obj.regexp, obj.func);
+        }
+        return text;
+    }
+
+    function convertMarkdownToScrapbox(text: string) {
+        text = text.replace(
+            /!\[([^\]]+)\]\(((h?)(ttps?:\/\/[a-zA-Z0-9.\-_@:/~?%&;=+#',()*!]+))\)/g,
+            (_match, _title, url, _h, _href) => `[[${url}]]`
+        ).replace(
+            /\[([^\]]+)\]\(((h?)(ttps?:\/\/[a-zA-Z0-9.\-_@:/~?%&;=+#',()*!]+))\)/g,
+            (_match, title, url, _h, _href) => `[${title} ${url}]`
+        ).replace(
+            /\[\[(.+?)\]\]/g,
+            (_match, title) => `[${title}]`
+        ).replace(
+            /\t*\|/g,
+            '\t'
+        ).replace(
+            /^#+ (.*)/g,
+            (_match, title) => `[** ${title}]`
+        ).replace(
+            /^( *)- /g,
+            (_match, space) => `${'\t'.repeat(space.count(' ') / 2 + 1)}`
+        ).replace(
+            /(( |　|\t)+)$/,
+            ''
+        )
+
+        return text;
+    }
+}
