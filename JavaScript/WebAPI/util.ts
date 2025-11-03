@@ -27,17 +27,19 @@ export function expandShortenedURL(url: string) {
         });
 }
 
-export function copyToClipboard(txt: string) {
+export function copyToClipboard(txt: string, needsAlert = false) {
     return navigator.clipboard.writeText(txt)
         .then(() => {
-            //console.log("Text copied to clipboard...")
-            console.group("Copied to clipboard");
-            console.log(txt.length < 100 ? txt : txt.slice(0, 100) + "…");
+            const display = (num: number) => txt.length < num ? txt : txt.slice(0, num) + '…';
+            console.group('Copied to clipboard');
+            console.log(display(100));
             console.groupEnd();
+            if (needsAlert) alert(`クリップボードにコピーしました。\n\n${display(30)}`);
         })
-        .catch((err) => {
-            console.log("Failed to copy", err);
-        });
+        .catch(err => {
+            console.log('Something went wrong', err);
+            if (needsAlert) alert('コピーできませんでした。');
+        })
 }
 
 
