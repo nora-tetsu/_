@@ -80,45 +80,34 @@ export class DynalistClient {
         },
         /** 指定したノードに子項目を追加する
          * indexは0でtop、-1でend */
-        insert: async (fileId: string, change: {
-            parent_id: string,
-            index: number,
-            content: string,
-            note?: string,
-            checked?: boolean,
-            checkbox?: boolean,
-            heading?: number,
-            color?: number,
-        }) => {
-            const req = Object.assign(change, { action: 'insert' });
+        insert: async (
+            fileId: string,
+            change: Omit<ChangeContentRequest, "action">,
+        ) => {
+            const req = Object.assign(change, { action: "insert" });
             return await this.doc.edit(fileId, [req]);
         },
         /** 指定したノードのプロパティを編集する */
-        change: async (fileId: string, change: {
-            node_id: string,
-            content?: string,
-            note?: string,
-            checked?: boolean,
-            checkbox?: boolean,
-            heading?: number,
-            color?: number,
-        }) => {
+        change: async (
+            fileId: string,
+            change: Omit<ChangeContentRequest, "action">,
+        ) => {
             const req = Object.assign(change, { action: 'edit' });
             return await this.doc.edit(fileId, [req]);
         },
         /** 指定したノードを指定したparentノードの子に移動する */
-        move: async (fileId: string, change: {
-            node_id: string,
-            parent_id: string,
-            index: number,
-        }) => {
+        move: async (
+            fileId: string,
+            change: Pick<ChangeContentRequest, "node_id" | "parent_id" | "index">,
+        ) => {
             const req = Object.assign(change, { action: 'move' });
             return await this.doc.edit(fileId, [req]);
         },
         /** 指定したノードを削除する */
-        delete: async (fileId: string, change: {
-            node_id: string,
-        }) => {
+        delete: async (
+            fileId: string,
+            change: Pick<ChangeContentRequest, "node_id">,
+        ) => {
             const req = Object.assign(change, { action: 'delete' });
             return await this.doc.edit(fileId, [req]);
         },
