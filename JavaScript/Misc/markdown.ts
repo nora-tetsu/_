@@ -67,7 +67,7 @@ export function extractSections(markdown: string, level: number, headingText: st
     let currentStart: number | null = null;
 
     for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
+        const line = lines[i];
 
         // 次の対象の見出しが来たとき：前のセクションを閉じる
         if (line === targetHeading) {
