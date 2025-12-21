@@ -13,6 +13,11 @@ export const NotionProps = {
                     "type": "database_id",
                     "database_id": parent_id,
                 }
+            } else if (type === "source") {
+                return {
+                    "type": "data_source_id",
+                    "data_source_id": parent_id,
+                }
             }
         },
         icon(src: string) {
