@@ -1,28 +1,31 @@
 import { Client } from "npm:@notionhq/client";
-import type { QueryDatabaseResponse, ListBlockChildrenResponse } from "npm:@notionhq/client";
 // import { markdownToBlocks, markdownToRichText } from 'npm:@tryfabric/martian';
 // import { NotionConverter } from "npm:notion-to-md";
 // import { $getPageFullContent, NotionMarkdownConverter } from "npm:@notion-md-converter/core";
 
+type Page = Awaited<ReturnType<typeof Client.prototype.databases.query>>["results"][number];
+type Block = Awaited<ReturnType<typeof Client.prototype.blocks.children.list>>["results"][number];
+type CreatePageBodyParas = Parameters<typeof Client.prototype.pages.create>[0];
+
 export class NotionClient {
     client;
     constructor(token: string) {
-        this.client = new Client({ auth: token });
+        this.client = new Client({ auth: token, notionVersion: "2025-09-03" });
     }
-    addPageOnDatabase(database_id: string, prop: unknown) {
+    addPageOnDatabase(database_id: string, prop: CreatePageBodyParas) {
         return this.client.pages.create({
             parent: {
                 type: "database_id",
                 database_id,
             },
             properties: prop.properties,
-            ...(parse.children && { children: prop.children }),
-            ...(parse.icon && { icon: prop.icon }),
-            ...(parse.cover && { cover: prop.cover }),
+            ...(prop.children && { children: prop.children }),
+            ...(prop.icon && { icon: prop.icon }),
+            ...(prop.cover && { cover: prop.cover }),
         });
     }
     async getPagesOnDatabase(databaseId: string) {
-        let allPages: QueryDatabaseResponse[] = [];
+        let allPages: Page[] = [];
         let hasMore = true;
         let cursor: string | null | undefined = undefined;
 
@@ -40,7 +43,7 @@ export class NotionClient {
         return allPages;
     }
     async getPageChildren(fileId: string) {
-        let allBlocks: ListBlockChildrenResponse[] = [];
+        let allBlocks: Block[] = [];
         let hasMore = true;
         let cursor: string | null | undefined = undefined;
 
@@ -59,7 +62,7 @@ export class NotionClient {
     }
     async getAllDataOnDatabase(databaseId: string) {
         const pages = await this.getPagesOnDatabase(databaseId);
-        const roop = async (page: ListBlockChildrenResponse) => {
+        const roop = async (page: Block) => {
             if (!page.has_children) return;
             const blocks = await this.getPageChildren(page.id);
             for (const block of blocks) {
