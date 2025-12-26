@@ -1,7 +1,7 @@
 import { OpmlParser } from "../WebAPI/opml.ts";
 import { text2MarkdownData } from "../markdown.ts";
 
-type DataType = {
+interface DataType {
     id: number;
     title: string;
     depth: number;
@@ -162,7 +162,7 @@ function convertToText(master: DataType[]) {
 }
 
 // 2025/02/23
-type Data = {
+interface Data {
     id: number;
     title: string;
     body: string;

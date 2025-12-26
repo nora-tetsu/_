@@ -1,7 +1,7 @@
 // ChatGPT
-import {JSX,useEffect, useRef, type Signal} from "../deps.ts";
+import { JSX, useEffect, useRef } from "../deps.ts";
 
-type Props = {
+interface Props {
   open: boolean;
   onClose: () => void;
   children: JSX.Element | JSX.Element[];

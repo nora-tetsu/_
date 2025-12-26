@@ -1,4 +1,4 @@
-type OEmbedResponse = {
+interface OEmbedResponse {
     version: string,
     type: string,
     provider_name: string,

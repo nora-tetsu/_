@@ -1,17 +1,17 @@
 import { JSX } from "../../deps.ts";
 
-export type InputProps = {
+export interface InputProps extends JSX.HTMLAttributes<HTMLInputElement> {
     label?: string;
     error?: string;
-} & JSX.HTMLAttributes<HTMLInputElement>;
+};
 
-export type TextareaProps = {
+export interface TextareaProps extends JSX.HTMLAttributes<HTMLTextAreaElement> {
     label?: string;
     error?: string;
-} & JSX.HTMLAttributes<HTMLTextAreaElement>;
+};
 
-export type SelectProps = {
+export interface SelectProps extends JSX.HTMLAttributes<HTMLSelectElement> {
     label?: string;
     error?: string;
     options: { value: string; label: string }[];
-} & JSX.HTMLAttributes<HTMLSelectElement>;
+};

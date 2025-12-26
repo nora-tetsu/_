@@ -1,4 +1,4 @@
-type DataType = {
+interface DataType {
     title: string;
     date: string;
     body: string;
@@ -6,7 +6,7 @@ type DataType = {
     tags: string[];
 }
 
-export function parseCatMemoNote(rootPath:string) {
+export function parseCatMemoNote(rootPath: string) {
     const data: DataType[] = [];
 
     const dirs = Deno.readDirSync(rootPath);
@@ -63,7 +63,7 @@ function convertXTMemoToData(text: string, category: string) {
     return map.filter(v => v) as DataType[];
 }
 
-export function parseXTMemo(rootPath:string) {
+export function parseXTMemo(rootPath: string) {
     const data = [];
 
     const files = Deno.readDirSync(rootPath);
@@ -81,7 +81,7 @@ export function parseXTMemo(rootPath:string) {
     return data;
 }
 
-export function convertXTMemoDiaryToText(jsonPath:string) {
+export function convertXTMemoDiaryToText(jsonPath: string) {
     const data = JSON.parse(jsonPath) as DataType[];
 
     const filter = data.filter(obj => obj.category === "ChangeLog" && obj.tags.includes("Daily"));

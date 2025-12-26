@@ -1,4 +1,4 @@
-export type ImageData = {
+export interface ImageData {
     "image_id": string, // "8980c52421e452ac3355ca3e5cfe7a0c",
     "permalink_url": string, // "http://gyazo.com/8980c52421e452ac3355ca3e5cfe7a0c",
     "thumb_url": string, // "https://i.gyazo.com/thumb/afaiefnaf.png",
@@ -27,7 +27,7 @@ desc	string			任意のコメント
 created_at	float			画像の作られた日時（Unix time）
 collection_id	string			ユーザーが所有している/参加しているコレクションにのみ追加できます
 */
-export type UploadRequest = {
+export interface UploadRequest {
     imagedata: FormData,
     access_policy?: 'anyone' | 'only_me',
     metadata_is_public?: 'true' | 'false',
@@ -39,7 +39,7 @@ export type UploadRequest = {
     collection_id?: string,
 }
 
-export type UploadResponse = {
+export interface UploadResponse {
     "image_id": string, // "8980c52421e452ac3355ca3e5cfe7a0c",
     "permalink_url": string, // "http://gyazo.com/8980c52421e452ac3355ca3e5cfe7a0c",
     "thumb_url": string, // "https://i.gyazo.com/thumb/180/afaiefnaf.png",

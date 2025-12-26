@@ -1,4 +1,4 @@
-type DateData = {
+interface DateData {
     year?: number;
     month?: number;
     date?: number;
@@ -8,7 +8,7 @@ type DateData = {
     milliseconds?: number;
 }
 
-type DateFormatStringObject = {
+interface DateFormatStringObject {
     YYYY: number,
     YY: string,
     M: number,
@@ -24,7 +24,7 @@ type DateFormatStringObject = {
     day: number,
 }
 
-type SortOption = {
+interface SortOption {
     key?: string;
     isAscending?: boolean;
     isDescending?: boolean;

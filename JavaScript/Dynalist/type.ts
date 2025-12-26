@@ -1,4 +1,4 @@
-export type FileData = {
+export interface FileData {
     id: string,
     title: string,
     type: 'document' | 'folder',
@@ -6,7 +6,8 @@ export type FileData = {
     collapsed?: boolean,
     children?: string[],
 }
-export type ChangeFileRequest = {
+
+export interface ChangeFileRequest {
     action: 'edit' | 'move' | 'create',
     type: 'document' | 'folder',
     file_id?: string, // edit | move
@@ -14,7 +15,8 @@ export type ChangeFileRequest = {
     index?: number, // move | create
     title?: string, // edit | create
 }
-export type NodeData = {
+
+export interface NodeData {
     id: string,
     content: string,
     note: string,
@@ -27,7 +29,8 @@ export type NodeData = {
     collapsed?: boolean,
     children: string[], // idの配列
 }
-export type ChangeContentRequest = {
+
+export interface ChangeContentRequest {
     action: string, //'insert' | 'edit' | 'move' | 'delete',
     node_id?: string,
     parent_id?: string,
@@ -39,7 +42,8 @@ export type ChangeContentRequest = {
     heading?: number,
     color?: number,
 }
-export type SendToInboxRequest = {
+
+export interface SendToInboxRequest {
     index: number,
     content: string,
     note?: string,

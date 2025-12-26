@@ -46,7 +46,7 @@ marked.use({
   //breaks: true,
 });
 
-type MarkedOption = {
+interface MarkedOption {
   bracket?: boolean;
   collapsible?: boolean;
   comment?: boolean;

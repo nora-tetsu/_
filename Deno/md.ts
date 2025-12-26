@@ -4,7 +4,7 @@ import { getFilesData } from "./file.ts";
 import { text2MarkdownData } from "../JavaScript/markdown.ts";
 import { analyzePath, createPath } from "../JavaScript/util.ts"
 
-type DataInfo = {
+interface DataInfo {
     filename: string;
     frontmatter: unknown;
     body: string;

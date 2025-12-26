@@ -113,12 +113,12 @@ export function getArticleInfo() {
 export const getArticleData = getArticleInfo;
 
 
-type NodeSearchCondition = {
+interface NodeSearchCondition {
     text?: string | RegExp;
     note?: string | RegExp;
     url?: string;
 }
-export type NodeContent = { text: string, note: string }
+export interface NodeContent { text: string, note: string }
 export class DynalistNodeHtmlParser {
     container: HTMLElement;
     /**

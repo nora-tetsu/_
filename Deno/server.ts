@@ -15,7 +15,7 @@ const getMimeType = (pathname: string) => {
     return result || 'text/plain';
 }
 
-type FileType = { name: string, dir: string }
+interface FileType { name: string, dir: string }
 /**
  * 
  * @param {string} directory アドレス

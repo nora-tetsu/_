@@ -17,17 +17,17 @@ export function Button2(props: JSX.HTMLAttributes<HTMLButtonElement>) {
   );
 }
 
-type FaButtonProps = {
+interface FaButtonProps extends JSX.HTMLAttributes<HTMLElement> {
   fontawesome: string;
   onClick: (e: MouseEvent) => void;
   title: string;
-} & JSX.HTMLAttributes<HTMLElement>;
+};
 
-type FaToggleButtonProps = {
+interface FaToggleButtonProps extends JSX.HTMLAttributes<HTMLElement> {
   fontawesome: string;
   signal: Signal<boolean>;
   title: string;
-} & JSX.HTMLAttributes<HTMLElement>;
+};
 
 export function FaButton({ fontawesome, onClick, title, ...rest }: FaButtonProps) {
   return (

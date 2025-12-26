@@ -23,7 +23,7 @@ console.log(path);
   } ]
 */
 
-type KuromojiToken = {
+interface KuromojiToken {
     word_id: number,          // 辞書内での単語ID
     word_type: string,       // 単語タイプ(辞書に登録されている単語ならKNOWN, 未知語ならUNKNOWN)
     word_position: number,         // 単語の開始位置

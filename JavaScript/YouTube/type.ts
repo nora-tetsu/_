@@ -1,5 +1,5 @@
 
-type VideoThumnail = {
+interface VideoThumnail {
     default: { url: string, width: number, height: number },
     medium?: { url: string, width: number, height: number },
     high?: { url: string, width: number, height: number },
@@ -7,7 +7,7 @@ type VideoThumnail = {
     maxres?: { url: string, width: number, height: number },
 }
 
-type VideoSnippet = {
+interface VideoSnippet {
     publishedAt: string;
     channelId: string;
     title: string;
@@ -29,7 +29,7 @@ type VideoSnippet = {
     publishTime?: string
 }
 
-export type VideoItem = {
+export interface VideoItem {
     kind: string;
     etag: string;
     id: string;
@@ -59,7 +59,7 @@ export type VideoItem = {
     }
 }
 
-export type PlaylistItemsResponse = {
+export interface PlaylistItemsResponse {
     kind: string;
     etag: string;
     items: VideoItem[];
@@ -70,7 +70,7 @@ export type PlaylistItemsResponse = {
     nextPageToken?: string;
 }
 
-export type SearchResponse = {
+export interface SearchResponse {
     kind: string,
     etag: string,
     nextPageToken: string,
@@ -87,7 +87,7 @@ export type SearchResponse = {
     }[]
 }
 
-type ChannelItem = {
+interface ChannelItem {
     kind: string,
     etag: string,
     id: string,
@@ -119,7 +119,7 @@ type ChannelItem = {
     }
 }
 
-export type ChannelsResponse = {
+export interface ChannelsResponse {
     kind: string;
     etag: string;
     pageInfo: { totalResults: number, resultsPerPage: number },
