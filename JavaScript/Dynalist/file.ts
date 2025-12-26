@@ -1,125 +1,67 @@
 import { marked } from "https://deno.land/x/marked@1.0.2/mod.ts";
 //import { DOMParser } from "jsr:@b-fuze/deno-dom";
 import "../native-extensions.ts";
+import { parseNodeData, NodeDataArray, type NodeObject } from "./helpers.ts";
 import type { NodeData } from "./type.ts";
 
-// このノードは条件に合うかどうかのチェック
-function isMatch(node: NodeData, condition: Partial<NodeData>, or = false) {
-    const result: boolean[] = [];
-    if (condition.id) {
-        result.push(node.id === condition.id);
-    }
-    if (condition.content) {
-        result.push(node.content.includes(condition.content));
-    }
-    if (condition.note) {
-        result.push(node.note.includes(condition.note));
-    }
-    if (condition.checked !== undefined) {
-        result.push(Boolean(node.checked) === condition.checked);
-    }
-    if (condition.checkbox !== undefined) {
-        result.push(Boolean(node.checkbox) === condition.checkbox);
-    }
-    if (condition.color !== undefined) {
-        result.push(node.color === condition.color);
-    }
-    if (condition.heading !== undefined) {
-        result.push(node.heading === condition.heading);
-    }
-    if (condition.collapsed !== undefined) {
-        result.push(Boolean(node.collapsed) === condition.collapsed);
-    }
-
-    return or ? result.some(bool => bool === true) : result.every(bool => bool === true);
-}
 
 export class DynalistParser {
-    data: NodeData[];
+    data: NodeDataArray;
     DOMParser: typeof DOMParser;
     constructor(data: NodeData[], domParser: typeof DOMParser) {
-        this.data = data;
+        this.data = parseNodeData(data);
         this.DOMParser = domParser;
     }
-    pick(id: string) {
-        return this.data.find(d => d.id === id);
-    }
     private condition = {
-        hasChildren(node: NodeData) {
+        hasChildren(node: NodeObject) {
             return Boolean(node.children && node.children.length);
         },
         /** 既定値：contentが「📃」始まりである */
-        isNote(node: NodeData) {
+        isNote(node: NodeObject) {
             return node.content.startsWith("📃");
         },
         /** 既定値：contentが「//」始まりである */
-        shouldBeIgnored(node: NodeData) {
+        shouldBeIgnored(node: NodeObject) {
             const IGNORE_LIST = ['//'];
             return IGNORE_LIST.some(value => node.content.startsWith(value));
         },
         /** 既定値：contentが「Code:」または「code:」始まりである */
-        isCodeblock(node: NodeData) {
+        isCodeblock(node: NodeObject) {
             return Boolean(node.content.match(/^(?:C|c)ode:\s*(.*)/));
         },
         /** 既定値：contentが「|| 」始まりまたはnoteに「<ul>」を含む */
-        isParentOfBullets(node: NodeData) {
+        isParentOfBullets(node: NodeObject) {
             return node.content.startsWith('|| ') || (!this.isCodeblock(node) && node.note.includes('<ul>'));
         },
         /** 既定値：contentが「||o 」始まりまたはnoteに「<ol>」を含む */
-        isParentOfOrderedBullets(node: NodeData) {
+        isParentOfOrderedBullets(node: NodeObject) {
             return node.content.startsWith('||o ') || (!this.isCodeblock(node) && node.note.includes('<ol>'));
         },
         /** 既定値：childrenを持ち、contentが「▼ 」または「▲ 」始まり */
-        isParentOfDetails(node: NodeData) {
+        isParentOfDetails(node: NodeObject) {
             return (node.content.startsWith('▼ ') || node.content.startsWith('▲ ')) && this.hasChildren(node);
         },
         /** 既定値：contentが「▼ 」始まり */
-        isDetailsOpend(node: NodeData) {
+        isDetailsOpend(node: NodeObject) {
             return node.content.startsWith('▼ ');
         },
         /** 既定値：contentが「table:」または「Table:」始まり */
-        isParentOfTable(node: NodeData) {
+        isParentOfTable(node: NodeObject) {
             return node.content.startsWith('table:') || node.content.startsWith('Table:');
         },
         /** 既定値：isParentOfDetailsがfalse */
-        shouldIgnoreCollapsedChildren(node: NodeData) {
+        shouldIgnoreCollapsedChildren(node: NodeObject) {
             if (this.isParentOfDetails(node)) return false; // Detailsの親の場合は無視しない
             return true;
         },
     }
-    setCondition(key: keyof typeof this.condition, condition: (node: NodeData) => boolean) {
+    setCondition(key: keyof typeof this.condition, condition: (node: NodeObject) => boolean) {
         this.condition[key] = condition;
     }
-    getChildren(node: NodeData) {
-        if (!this.condition.hasChildren(node)) return [] as NodeData[];
-        return node.children.map(id => this.pick(id) as NodeData);
-    }
-    /** 条件に一致する子孫ノードを取得する */
-    filterDescendants(node: NodeData, condition: Partial<NodeData>) {
-        const result: NodeData[] = [];
-        const roop = (parent: NodeData) => {
-            if (isMatch(parent, condition)) result.push(parent);
-            this.getChildren(parent).forEach(node => roop(node));
-            return;
-        }
-        roop(node);
-        return result;
-    }
-    /** あるノードの親ノードを遡って取得する */
-    getAncestors(data: NodeData) {
-        function getParent(nodes: NodeData[], childId: string) {
-            return nodes.find(node => node.children?.includes(childId));
-        }
-        const parents: NodeData[] = [];
-        let parent = getParent(this.data, data.id);
-        while (parent) {
-            parents.push(parent);
-            parent = getParent(this.data, parent.id);
-        }
-        parents.reverse();
-        return parents;
-    }
-    textGetter(data: NodeData) {
+
+    // 以下テキスト取得メソッド
+
+    textGetter(data: NodeObject) {
         if (!data) return () => "";
         return (type: "plain" | "plainAll" | "markdownEx" | "html" | "br") => {
             switch (type) {
@@ -140,9 +82,9 @@ export class DynalistParser {
             }
         }
     }
-    private getPlainText(node: NodeData, includeComments: boolean, includeNotes: boolean, includeParent = false) {
+    private getPlainText(node: NodeObject, includeComments: boolean, includeNotes: boolean, includeParent = false) {
         const result: string[] = [];
-        const roop = (target: NodeData, isParent = false) => {
+        const loop = (target: NodeObject, isParent = false) => {
             if (!target) return;
             const { note, collapsed, content } = target;
             // 無効な項目でないか
@@ -157,20 +99,20 @@ export class DynalistParser {
 
             // 子孫項目を再帰的に取得
             if (!this.condition.hasChildren(target)) return;
-            const children = this.getChildren(target);
+            const children = this.data.getChildren(target);
             children.forEach(obj => {
                 // 無効な項目でないか
                 if (!includeComments && this.condition.shouldBeIgnored(obj)) return;
-                roop(obj);
+                loop(obj);
             })
         }
-        roop(node, true);
+        loop(node, true);
         return result;
     }
-    private getMarkedText(node: NodeData, includeParent = false) {
+    private getMarkedText(node: NodeObject, includeParent = false) {
         const result: string[] = [];
         const cond = this.condition;
-        const roop = (target: NodeData, isParent = false) => {
+        const loop = (target: NodeObject, isParent = false) => {
             if (!target) return;
             const { note, collapsed } = target;
             let { content } = target;
@@ -214,7 +156,7 @@ export class DynalistParser {
 
             // 子孫項目を再帰的に取得
             if (!cond.hasChildren(target)) return;
-            const children = this.getChildren(target);
+            const children = this.data.getChildren(target);
             const indent = content.match(/^(\s*)(-|\d+\.) /); // 箇条書き判定
             children.forEach(obj => {
                 if (cond.isParentOfTable(target)) return; // table処理は別にやる
@@ -243,17 +185,17 @@ export class DynalistParser {
                     }
                 }
                 child.content = c;
-                roop(obj);
+                loop(obj);
             });
 
             // table処理
             if (cond.isParentOfTable(target)) { // table処理
-                const getText = (obj: NodeData) => { // contentとnoteを連結する
+                const getText = (obj: NodeObject) => { // contentとnoteを連結する
                     let text = obj.content;
                     if (obj.note) text += "</ br>" + obj.note.replace(/\n/g, "</ br>");
                     return text;
                 }
-                const getThead = (obj: NodeData) => {
+                const getThead = (obj: NodeObject) => {
                     return obj.content.replace(/(\|?).*(\|?)/, (_match, left, right) => {
                         return (left && ':') + '---' + (right && ':');
                     });
@@ -261,7 +203,7 @@ export class DynalistParser {
                 children.forEach((node, i) => {
                     const row: string[] = [];
                     row.push(getText(node));
-                    const nodes = this.getChildren(node);
+                    const nodes = this.data.getChildren(node);
                     if (i === 0) {
                         // 見出し行を作る
                         const heading: string[] = [];
@@ -284,7 +226,7 @@ export class DynalistParser {
             }
 
         }
-        roop(node, true);
+        loop(node, true);
         return result;
     }
     private convertToHTML(text: string) {

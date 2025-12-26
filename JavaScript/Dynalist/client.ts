@@ -129,31 +129,3 @@ export class DynalistClient {
         }
     }
 }
-
-/**
- * あるノードの親ノードを遡って取得する
- * @param nodes 対象となるノード群
- * @param child ターゲットのidまたはNodeData
- * @returns 
- */
-export function getParents(nodes: NodeData[], child: string | NodeData) {
-    if (typeof child === "string") {
-        const find = nodes.find(node => node.id === child);
-        if (!find) {
-            return [];
-        } else {
-            child = find;
-        }
-    }
-    function getParent(nodes: NodeData[], childId: string) {
-        return nodes.find(node => node.children?.includes(childId));
-    }
-    const parents: NodeData[] = [];
-    let parent = getParent(nodes, child.id);
-    while (parent) {
-        parents.push(parent);
-        parent = getParent(nodes, parent.id);
-    }
-    parents.reverse();
-    return parents;
-}
