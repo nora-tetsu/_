@@ -128,6 +128,7 @@ export class NotionClient {
     async getAllDataOnDatabase(databaseId: string) {
         const pages = await this.getPagesOnDatabase(databaseId);
         const roop = async (page: Block) => {
+            if (!("has_children" in page) || !("children" in page)) return;
             if (!page.has_children) return;
             const blocks = await this.getPageChildren(page.id);
             for (const block of blocks) {
@@ -136,6 +137,7 @@ export class NotionClient {
             page.children = blocks;
         }
         for (const page of pages) {
+            if (!("children" in page)) return;
             const blocks = await this.getPageChildren(page.id);
             for (const block of blocks) {
                 roop(block);
