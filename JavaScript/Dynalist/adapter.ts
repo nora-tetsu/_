@@ -1,15 +1,15 @@
 import { marked } from "https://deno.land/x/marked@1.0.2/mod.ts";
 //import { DOMParser } from "jsr:@b-fuze/deno-dom";
 import "../native-extensions.ts";
-import { parseNodeData, NodeDataArray, type NodeObject } from "./helpers.ts";
+import { NodeDataArray, type NodeObject } from "./helpers.ts";
 import type { NodeData } from "./type.ts";
 
 
-export class DynalistParser {
-    data: NodeDataArray;
+export class DynalistNodeDataAdapter extends NodeDataArray {
     DOMParser: typeof DOMParser;
     constructor(data: NodeData[], domParser: typeof DOMParser) {
-        this.data = parseNodeData(data);
+        super();
+        this.importNodeData(data);
         this.DOMParser = domParser;
     }
     private condition = {
@@ -99,7 +99,7 @@ export class DynalistParser {
 
             // 子孫項目を再帰的に取得
             if (!this.condition.hasChildren(target)) return;
-            const children = this.data.getChildren(target);
+            const children = this.getChildren(target);
             children.forEach(obj => {
                 // 無効な項目でないか
                 if (!includeComments && this.condition.shouldBeIgnored(obj)) return;
@@ -156,7 +156,7 @@ export class DynalistParser {
 
             // 子孫項目を再帰的に取得
             if (!cond.hasChildren(target)) return;
-            const children = this.data.getChildren(target);
+            const children = this.getChildren(target);
             const indent = content.match(/^(\s*)(-|\d+\.) /); // 箇条書き判定
             children.forEach(obj => {
                 if (cond.isParentOfTable(target)) return; // table処理は別にやる
@@ -203,7 +203,7 @@ export class DynalistParser {
                 children.forEach((node, i) => {
                     const row: string[] = [];
                     row.push(getText(node));
-                    const nodes = this.data.getChildren(node);
+                    const nodes = this.getChildren(node);
                     if (i === 0) {
                         // 見出し行を作る
                         const heading: string[] = [];
@@ -272,7 +272,7 @@ export class DynalistParser {
                     // <a name='{脚注ID}'>{脚注番号}</a>: <!--注釈文を記述-->
                     /\{\s*(https:\/\/dynalist\.io\/d\/[^#]*#z=(.+?))\s*\}/g,
                     (_match, _url, id) => {
-                        const target = this.data.find(obj => obj.id === id);
+                        const target = this.find(obj => obj.id === id);
                         if (!target) return '';
                         const text = this.textGetter(target)("br");
                         const dom = new this.DOMParser().parseFromString(text, "text/html")!;
