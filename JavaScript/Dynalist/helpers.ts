@@ -38,8 +38,14 @@ function isMatch(node: NodeData, condition: Partial<NodeData>, or = false) {
     return or ? result.some(bool => bool === true) : result.every(bool => bool === true);
 }
 
-
+/**
+ * `extends Array<NodeObject>`  
+ * `NodeData`の取り込みは`importNodeData`メソッドを用いる
+ */
 export class NodeDataArray extends Array<NodeObject> {
+    importNodeData(data: NodeData[]) {
+        this.push(...data.map(obj => convertNodeData(obj)));
+    }
     pick(id: NodeID) {
         return this.find((d) => d.id === id);
     }
@@ -97,15 +103,18 @@ export class NodeDataArray extends Array<NodeObject> {
     }
 }
 
-export function parseNodeData(data: NodeData[]) {
-    return new NodeDataArray(...data.map(obj => {
-        return Object.assign(obj, {
-            matchesAll(condition: Partial<NodeData>) {
-                return isMatch(obj, condition, false)
-            },
-            matchesAny(condition: Partial<NodeData>) {
-                return isMatch(obj, condition, true)
-            },
-        })
-    }))
+/**
+ * NodeDataにメソッドを付与してNodeObjectに変換する
+ * @param obj Dynalist APIで取得したノードデータ
+ * @returns 
+ */
+function convertNodeData(obj: NodeData): NodeObject {
+    return Object.assign(obj, {
+        matchesAll(condition: Partial<NodeData>) {
+            return isMatch(obj, condition, false)
+        },
+        matchesAny(condition: Partial<NodeData>) {
+            return isMatch(obj, condition, true)
+        },
+    })
 }
