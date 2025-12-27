@@ -19,20 +19,24 @@ const parser = (text: string) => marked.parse(text, {
     renderer,
 })
 
-export async function text2MarkdownData(text: string) {
+export async function parseMarkdownText2Html(text: string) {
+    return hundleSpace.restore(await parser(hundleSpace.refuge(text)));
+}
+
+export async function parseMdfile(text: string) {
     if (text.startsWith("---")) {
         const split = text.split("---");
         const yaml = split[1].trim();
         const body = split.slice(2).join("---");
         return {
             body,
-            marked: hundleSpace.restore(await parser(hundleSpace.refuge(body))),
+            marked: await parseMarkdownText2Html(body),
             frontmatter: Yaml.parse(yaml) as Record<string, unknown>,
         }
     } else {
         return {
             body: text,
-            marked: await parser(text),
+            marked: await parseMarkdownText2Html(text),
             frontmatter: {},
         }
     }
@@ -52,14 +56,13 @@ export function html2Markdown(html: string) {
 
 /**
  * 指定した見出し部分のテキストを取得する（ChatGPT製）
- * @param markdown フロントマターを除く本文部分
+ * @param markdownText フロントマターを除く本文部分
  * @param level 取得したい見出しレベル（`#`の数）
  * @param headingText 取得したい見出しテキスト
  * @returns 
  */
-export function extractSections(markdown: string, level: number, headingText: string): string[] {
-    markdown = hundleSpace.refuge(markdown);
-    const lines = markdown.split("\n");
+export function pickMarkdownSections(markdownText: string, level: number, headingText: string): string[] {
+    const lines = markdownText.split("\n");
     const targetHeading = "#".repeat(level) + " " + headingText;
     const headingRegex = /^#{1,6}\s+(.*)$/;
 
@@ -99,13 +102,13 @@ export function extractSections(markdown: string, level: number, headingText: st
         sections.push(section);
     }
 
-    return sections.map(section => hundleSpace.restore(section));
+    return sections;
 }
 
-export class MarkdownParser {
+export class MdfileParser {
     text: string;
     body: string = "";
-    marked: string = "";
+    html: string = "";
     frontmatter: Record<string, unknown> = {};
     constructor(text: string) {
         this.text = text;
@@ -116,11 +119,15 @@ export class MarkdownParser {
      * @returns 
      */
     async init() {
-        const { body, marked, frontmatter } = await text2MarkdownData(this.text);
+        const { body, marked, frontmatter } = await parseMdfile(this.text);
         this.body = body;
-        this.marked = marked;
+        this.html = marked;
         this.frontmatter = frontmatter;
         return this;
+    }
+
+    async getHtml() {
+        return await parseMarkdownText2Html(this.body);
     }
 
     /**
@@ -129,9 +136,15 @@ export class MarkdownParser {
      * @param headingText 取得したい見出しテキスト
      * @returns 
      */
-    extractSections(level: number, headingText: string): string[] {
-        return extractSections(this.body, level, headingText);
+    pickSections(level: number, headingText: string): string[] {
+        return pickMarkdownSections(this.body, level, headingText);
     }
+
+    /**
+     * 本文またはフロントマターの変更
+     * @param newData 
+     * @returns 
+     */
     replace(newData: {
         body?: string;
         frontmatter?: Record<string, unknown>;
